@@ -1,0 +1,88 @@
+"use client";
+
+import { LoaderCircle, MailCheck } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export function RecoverForm() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [pending, setPending] = useState(false);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setMessage("");
+    setPreviewUrls([]);
+    try {
+      const response = await fetch("/api/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const result = (await response.json()) as {
+        message: string;
+        previewManageUrls?: string[];
+      };
+      setMessage(result.message);
+      setPreviewUrls(result.previewManageUrls ?? []);
+    } catch {
+      setMessage(
+        "If active listings match that email, we'll send their private management links.",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <form onSubmit={submit} className="grid gap-4">
+        <label className="grid gap-2 text-sm font-medium">
+          Email address
+          <Input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+          />
+        </label>
+        <Button type="submit" size="lg" disabled={pending}>
+          {pending ? (
+            <LoaderCircle className="animate-spin" aria-hidden="true" />
+          ) : null}
+          Email my management links
+        </Button>
+      </form>
+      {message ? (
+        <Alert>
+          <MailCheck aria-hidden="true" />
+          <AlertTitle>Check your inbox</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      ) : null}
+      {previewUrls.length > 0 ? (
+        <Alert>
+          <AlertTitle>Local email preview</AlertTitle>
+          <AlertDescription>
+            Email delivery is in preview mode. Open a private management link:
+            <span className="mt-3 flex flex-col gap-2">
+              {previewUrls.map((url, index) => (
+                <Link key={url} href={url} className="font-medium">
+                  Manage demo listing {index + 1}
+                </Link>
+              ))}
+            </span>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+    </div>
+  );
+}
