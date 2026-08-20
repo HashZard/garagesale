@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import { DemoMap } from "@/components/map/demo-map";
+import { FallbackMap } from "@/components/map/fallback-map";
 import type { NearbySale } from "@/types/sale";
 
 const LiveSaleMap = dynamic(
@@ -28,6 +28,6 @@ type SaleMapProps = {
 export function SaleMap({ sales }: SaleMapProps) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-  if (!token || sales.length === 0) return <DemoMap sales={sales} />;
+  if (!token || sales.length === 0) return <FallbackMap sales={sales} />;
   return <LiveSaleMap sales={sales} token={token} />;
 }

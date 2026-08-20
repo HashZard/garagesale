@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  DEMO_ADMIN_SECRET,
+  LOCAL_ADMIN_SECRET,
   getAdminSecret,
   isAdminAuthenticated,
 } from "@/lib/admin-auth";
@@ -45,9 +45,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <CardContent>
             {configured ? (
               <AdminLoginForm
-                demoSecret={
-                  adminSecret === DEMO_ADMIN_SECRET
-                    ? DEMO_ADMIN_SECRET
+                localSecret={
+                  adminSecret === LOCAL_ADMIN_SECRET
+                    ? LOCAL_ADMIN_SECRET
                     : undefined
                 }
               />

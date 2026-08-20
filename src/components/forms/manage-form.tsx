@@ -27,12 +27,11 @@ import {
 import type { ManagedSale } from "@/types/manage";
 
 type ManageFormProps = {
-  demoMode: boolean;
   sale: ManagedSale;
   verified: boolean;
 };
 
-export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
+export function ManageForm({ sale, verified }: ManageFormProps) {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState("");
@@ -85,8 +84,8 @@ export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
     setFormError("");
     setSaved(false);
     try {
-      const uploaded = demoMode ? [] : await uploadSalePhotos(files);
-      const response = await fetch(`/api/manage/${sale.manageToken}`, {
+      const uploaded = await uploadSalePhotos(files);
+      const response = await fetch("/api/manage", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +99,6 @@ export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
       form.setValue("photos", [...input.photos, ...uploaded]);
       setFiles([]);
       setSaved(true);
-      router.refresh();
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -120,9 +118,7 @@ export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
     setFormError("");
     try {
       const response = await fetch(
-        action === "cancel"
-          ? `/api/manage/${sale.manageToken}/cancel`
-          : `/api/manage/${sale.manageToken}`,
+        action === "cancel" ? "/api/manage/cancel" : "/api/manage",
         { method: action === "cancel" ? "POST" : "DELETE" },
       );
       const result = (await response.json()) as { error?: string };
@@ -172,7 +168,6 @@ export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
       <form onSubmit={form.handleSubmit(save)} className="space-y-6" noValidate>
         <ManageDetailsSection form={form} />
         <ManagePhotosSection
-          demoMode={demoMode}
           existingPhotos={existingPhotos}
           files={files}
           onAddPhotos={addPhotos}
@@ -188,7 +183,7 @@ export function ManageForm({ demoMode, sale, verified }: ManageFormProps) {
             )
           }
         />
-        <ManageLocationSection demoMode={demoMode} form={form} />
+        <ManageLocationSection form={form} />
         {formError ? (
           <Alert variant="destructive">
             <AlertTitle>Something went wrong</AlertTitle>

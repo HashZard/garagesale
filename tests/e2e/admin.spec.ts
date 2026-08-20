@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("本地演示后台可以登录、搜索和查看活动", async ({ page }, testInfo) => {
+test("本地后台可以登录、搜索和查看活动", async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes("desktop"), "仅桌面项目运行一次");
   await page.goto("/admin");
   await page.waitForLoadState("networkidle");

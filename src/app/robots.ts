@@ -1,8 +1,11 @@
-import { getSiteUrl } from "@/config/site";
+import { getSiteUrl, isSearchEngineIndexingEnabled } from "@/config/site";
 
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  if (!isSearchEngineIndexingEnabled()) {
+    return { rules: { userAgent: "*", disallow: "/" } };
+  }
   return {
     rules: {
       userAgent: "*",

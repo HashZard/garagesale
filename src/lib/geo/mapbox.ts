@@ -50,7 +50,11 @@ export async function verifyAustralianAddress<T extends AddressInput>(
   input: T,
 ): Promise<T> {
   const environment = getServerEnv();
-  if (environment.APP_DATA_MODE === "demo") return input;
+  if (
+    environment.DEPLOYMENT_ENV === "local" &&
+    !environment.MAPBOX_SERVER_TOKEN
+  )
+    return input;
 
   const parameters = new URLSearchParams({
     access_token: environment.MAPBOX_SERVER_TOKEN!,

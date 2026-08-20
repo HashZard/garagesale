@@ -8,23 +8,14 @@ import type {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AUSTRALIAN_STATES } from "@/config/constants";
-import type { Suburb } from "@/types/sale";
-
 type PublishLocationSectionProps = {
-  demoMode: boolean;
-  demoSuburbs: Suburb[];
   form: PublishFormApi;
-  onSelectDemoSuburb: (slug: string) => void;
   onSelectMapboxAddress: (feature: MapboxFeature) => void;
   suggestions: MapboxFeature[];
 };
 
 export function PublishLocationSection({
-  demoMode,
-  demoSuburbs,
   form,
-  onSelectDemoSuburb,
   onSelectMapboxAddress,
   suggestions,
 }: PublishLocationSectionProps) {
@@ -35,22 +26,6 @@ export function PublishLocationSection({
         <CardTitle>2. Where is the sale?</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-5">
-        {demoMode ? (
-          <label className="grid gap-2 text-sm font-medium">
-            Demo location preset
-            <select
-              className="bg-background h-11 rounded-lg border px-3"
-              onChange={(event) => onSelectDemoSuburb(event.target.value)}
-              defaultValue={demoSuburbs[0]?.slug}
-            >
-              {demoSuburbs.map((suburb) => (
-                <option value={suburb.slug} key={suburb.slug}>
-                  {suburb.name}, {suburb.state} {suburb.postcode}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
         <div className="relative grid gap-2">
           <label htmlFor="address" className="text-sm font-medium">
             Full street address <span className="text-destructive">*</span>
@@ -94,27 +69,19 @@ export function PublishLocationSection({
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="grid gap-2 text-sm font-medium">
             Suburb
-            <Input {...form.register("suburb")} readOnly={!demoMode} />
+            <Input {...form.register("suburb")} readOnly />
             <FieldError message={errors.suburb?.message} />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             State
-            <select
-              className="bg-background h-10 rounded-lg border px-3"
-              {...form.register("state")}
-              disabled={!demoMode}
-            >
-              {AUSTRALIAN_STATES.map((state) => (
-                <option key={state}>{state}</option>
-              ))}
-            </select>
+            <Input {...form.register("state")} readOnly />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Postcode
             <Input
               inputMode="numeric"
               {...form.register("postcode")}
-              readOnly={!demoMode}
+              readOnly
             />
             <FieldError message={errors.postcode?.message} />
           </label>

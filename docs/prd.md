@@ -75,14 +75,14 @@ GarageSale 帮助澳大利亚用户：
 | -------------- | ----------------------------------- | ------------------------------------------ |
 | Web 框架       | Next.js App Router + TypeScript     | Server Components 优先，SEO 内容服务端渲染 |
 | 数据库         | Supabase Postgres + PostGIS         | 距离查询必须使用 PostGIS                   |
-| 托管           | Vercel                              | Preview 与 Production 分离                 |
+| 托管           | Cloudflare Workers + OpenNext       | Preview 与 Production 分离                 |
 | 地图与地理编码 | Mapbox GL JS + Mapbox Geocoding API | 仅允许澳大利亚结果                         |
 | 邮件           | Resend                              | 发送验证和恢复邮件                         |
 | 样式           | Tailwind CSS v4                     | 移动端优先                                 |
 | 组件           | shadcn/ui + Radix                   | 组件源码保存在仓库内                       |
 | 图标           | lucide-react                        | 不引入第二套图标库                         |
 | 表单           | react-hook-form + Zod               | 客户端和服务端共用校验规则                 |
-| 图片           | Supabase Storage                    | 最多六张，客户端缩放至最长边 1600px        |
+| 图片           | Cloudflare R2                       | 最多六张，客户端缩放、服务端验签并同域分发 |
 | 包管理         | pnpm                                | 提交 `pnpm-lock.yaml`                      |
 | Node.js        | Node.js 24 LTS                      | `.nvmrc` 与 `package.json` 固定版本        |
 
@@ -254,7 +254,7 @@ tests/                   单元、集成和端到端测试
 - 375px 宽度下完整可用，无横向滚动。
 - 语义化 HTML、完整表单标签、键盘可操作和清晰焦点状态。
 - 所有服务端操作再次执行 Zod 校验，不能信任客户端地理编码数据。
-- 使用 Vercel Analytics，不建立分析供应商抽象。
+- 使用 Cloudflare Web Analytics，不采集管理、验证、恢复或后台路径。
 - 所有数据请求具有 loading、empty 和 error 状态。
 - 发布失败后保留表单输入。
 - 首页和 suburb 页移动端 Lighthouse 目标不低于 90。

@@ -1,5 +1,12 @@
 # 技术决策记录
 
+> 本文件保留 2026-08-20 之前的历史决定。当前有效跨层决定迁移到 `adr/`，与新架构冲突的历史条目不再生效。
+
+## 2026-08-20
+
+- ADR-0001 替代 Vercel 固定托管、共用生产 Supabase、运行时 demo store、明文管理 token、Supabase Storage 固定图片层和同步邮件发送决定。
+- 新目标为 Next.js + Cloudflare Workers + Supabase Postgres/PostGIS + Cloudflare R2；完整边界见 `docs/architecture/garage-sale-architecture.md`。
+
 本文件按日期追加重要实现选择。已经合并的历史决定不修改；如果决定变化，新增一条说明替代关系。
 
 ## 2026-07-19

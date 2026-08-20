@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, LoaderCircle, ShieldCheck } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -16,6 +15,7 @@ import {
   PublishContactSection,
   PublishTimeSection,
 } from "@/components/forms/publish-time-contact-sections";
+import { TurnstileWidget } from "@/components/forms/turnstile-widget";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,17 +26,11 @@ import {
   type PublishSaleFormInput,
   type PublishSaleInput,
 } from "@/lib/validation/sale";
-import type { Suburb } from "@/types/sale";
-
-type PublishFormProps = {
-  demoMode: boolean;
-  demoSuburbs: Suburb[];
-};
-
-export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
+export function PublishForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState("");
   const [previewVerifyUrl, setPreviewVerifyUrl] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [addressSuggestions, setAddressSuggestions] = useState<MapboxFeature[]>(
     [],
   );
@@ -64,7 +58,7 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   useEffect(() => {
-    if (!mapboxToken || demoMode || address.trim().length < 5) return;
+    if (!mapboxToken || address.trim().length < 5) return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       const parameters = new URLSearchParams({
@@ -87,7 +81,7 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [address, demoMode, mapboxToken]);
+  }, [address, mapboxToken]);
 
   function selectMapboxAddress(feature: MapboxFeature) {
     const properties = feature.properties;
@@ -120,16 +114,6 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
     setAddressSuggestions([]);
   }
 
-  function selectDemoSuburb(slug: string) {
-    const suburb = demoSuburbs.find((item) => item.slug === slug);
-    if (!suburb) return;
-    form.setValue("latitude", suburb.latitude);
-    form.setValue("longitude", suburb.longitude);
-    form.setValue("suburb", suburb.name);
-    form.setValue("state", suburb.state);
-    form.setValue("postcode", suburb.postcode);
-  }
-
   function selectPhotos(selected: FileList | null) {
     if (!selected) return;
     setFormError("");
@@ -154,11 +138,11 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
   async function submit(input: PublishSaleInput) {
     setFormError("");
     try {
-      const photos = demoMode ? [] : await uploadSalePhotos(files);
+      const photos = await uploadSalePhotos(files);
       const response = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...input, photos }),
+        body: JSON.stringify({ ...input, photos, turnstileToken }),
       });
       const result = (await response.json()) as {
         error?: string;
@@ -198,7 +182,7 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
                 flow.
               </AlertDescription>
               <Button asChild className="mt-4">
-                <Link href={previewVerifyUrl}>Confirm demo listing</Link>
+                <a href={previewVerifyUrl}>Confirm local listing</a>
               </Button>
             </Alert>
           ) : null}
@@ -210,7 +194,6 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
   return (
     <form onSubmit={form.handleSubmit(submit)} className="space-y-6" noValidate>
       <PublishListingSection
-        demoMode={demoMode}
         files={files}
         form={form}
         onSelectPhotos={selectPhotos}
@@ -221,15 +204,13 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
         }
       />
       <PublishLocationSection
-        demoMode={demoMode}
-        demoSuburbs={demoSuburbs}
         form={form}
         suggestions={addressSuggestions}
-        onSelectDemoSuburb={selectDemoSuburb}
         onSelectMapboxAddress={selectMapboxAddress}
       />
       <PublishTimeSection form={form} />
       <PublishContactSection form={form} />
+      <TurnstileWidget onToken={setTurnstileToken} />
       {formError ? (
         <Alert variant="destructive">
           <AlertTitle>We couldn&apos;t submit the listing</AlertTitle>
@@ -240,7 +221,7 @@ export function PublishForm({ demoMode, demoSuburbs }: PublishFormProps) {
         type="submit"
         size="lg"
         className="h-12 w-full text-base"
-        disabled={form.formState.isSubmitting}
+        disabled={form.formState.isSubmitting || !turnstileToken}
       >
         {form.formState.isSubmitting ? (
           <LoaderCircle className="animate-spin" aria-hidden="true" />

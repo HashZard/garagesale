@@ -17,12 +17,14 @@ type VerificationEmailInput = {
   email: string;
   manageToken: string;
   title: string;
+  verificationToken: string;
 };
 
 type RecoverySale = {
   manageToken: string;
   status: "pending_verification" | "published";
   title: string;
+  verificationToken: string | null;
 };
 
 export async function sendVerificationEmail(
@@ -35,7 +37,7 @@ export async function sendVerificationEmail(
   }
 
   const resend = new Resend(environment.RESEND_API_KEY);
-  const verifyUrl = `${environment.NEXT_PUBLIC_SITE_URL}/verify/${input.manageToken}`;
+  const verifyUrl = `${environment.NEXT_PUBLIC_SITE_URL}/verify/${input.verificationToken}?manage=${encodeURIComponent(input.manageToken)}`;
   const manageUrl = `${environment.NEXT_PUBLIC_SITE_URL}/manage/${input.manageToken}`;
   const { error } = await resend.emails.send({
     from: environment.RESEND_FROM_EMAIL,
@@ -68,7 +70,9 @@ export async function sendRecoveryEmail(input: {
   const listingLinks = input.sales
     .map((sale) => {
       const manageUrl = `${environment.NEXT_PUBLIC_SITE_URL}/manage/${sale.manageToken}`;
-      const verifyUrl = `${environment.NEXT_PUBLIC_SITE_URL}/verify/${sale.manageToken}`;
+      const verifyUrl = sale.verificationToken
+        ? `${environment.NEXT_PUBLIC_SITE_URL}/verify/${sale.verificationToken}?manage=${encodeURIComponent(sale.manageToken)}`
+        : null;
       const verification =
         sale.status === "pending_verification"
           ? `<br><a href="${verifyUrl}">Confirm this listing first</a>`

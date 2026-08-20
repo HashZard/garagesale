@@ -1,54 +1,52 @@
 # 数据模型
 
-当前结构由 `supabase/migrations` 中按时间顺序追加的迁移定义。迁移是唯一事实来源，本文件用于快速理解业务结构。
+`supabase/migrations` 是数据库结构唯一事实来源；本文件说明边界和变更链路。
 
 ## `sales`
 
-保存用户发布和外部聚合的 garage sale。
+保存公开活动内容、位置、时间、来源和生命周期。完整地址按产品决定公开；卖家邮箱和访问 token 不在本表。
 
-### 核心字段
+公开条件统一为 `status = 'published' AND end_at > now()`。`public_sales` 是匿名读取入口，只输出公开字段和经纬度。
 
-- 标识与内容：`id、title、description、photos、categories`
-- 地址：`address、suburb、state、postcode、location`
-- 时间：`start_at、end_at`
-- 来源：`source、source_url`
-- 私密管理：`contact_email、manage_token`
-- 生命周期：`status、email_verified_at、created_at、updated_at`
+## `sale_media`
 
-### 数据库约束
+保存图片 URL、R2 object key、排序、类型、尺寸和发布状态。`sales.photos` 暂时作为公开查询的兼容投影；触发器保证现有写入口与规范化记录同步，后续可在不改变 API 契约的情况下切换读取端。
 
-- 标题1至80字符，描述最多2000字符。
-- 州和来源只能使用PRD固定值，postcode必须为四位数字。
-- 结束时间晚于开始时间，并且在活动当地处于同一个日历日。
-- 图片最多六张且只能使用HTTPS链接；分类必须来自固定分类列表。
-- self 来源必须有邮箱和管理 token，不能有来源URL。
-- 外部来源必须有来源URL，不能有邮箱和管理 token。
-- 外部来源URL只能使用HTTPS协议。
+## `sale_private_details`
 
-### 索引
+保存自发布活动的 `contact_email` 与 `retain_until`。匿名和 authenticated 角色无访问权。活动删除时通过外键级联删除。
 
-- `location`：GIST，用于半径查询。
-- `state/suburb`：suburb SEO 和筛选。
-- `start_at`、`status/end_at`：未来和有效活动查询。
-- 非空邮箱的lower表达式索引：恢复和后台搜索。
+## `sale_access_tokens`
+
+保存 `verification` 与 `manage` 两类 token 的 SHA-256 哈希、到期、使用和撤销时间。数据库不得保存原始 token；恢复流程生成新管理 token 并撤销旧 token。
+
+## `email_outbox`
+
+保存验证和恢复邮件任务、重试次数、下次投递时间和投递状态。活动创建与 outbox 写入由 `create_self_sale` 在同一事务完成。投递成功后清除不再需要的敏感 payload。
+
+## `moderation_events`
+
+记录管理员动作、活动、时间和非敏感元数据。不得写入管理 token、Turnstile token 或完整请求体。
 
 ## `suburbs`
 
-保存标准 suburb、州、postcode、slug 和中心点。名称、州、postcode组合唯一，slug唯一；名称、postcode和位置均有搜索索引。
+保存规范化 suburb、州、postcode、slug 和 PostGIS 点位。`get_nearby_suburbs` 在 PostGIS 内排序；`get_indexable_suburbs` 只返回有活跃或最近 90 天活动的 suburb。
 
 ## `rate_limits`
 
-保存哈希后的访问者键、动作、时间窗口和次数。`consume_rate_limit` 通过单次原子 upsert 判断是否允许请求；客户端不能直接访问此表或函数。
+保存哈希后的访问者键、动作和原子时间窗口计数。客户端不能直接访问表或 `consume_rate_limit`。
 
-## 公开访问
+## 数据库函数
 
-- `sales` 和 `suburbs` 均启用RLS。
-- 匿名用户只可读取 published 且尚未结束的活动安全字段。
-- `contact_email` 和 `manage_token` 不授予匿名或authenticated角色读取权限。
-- `public_sales` 是 `security_invoker` 安全视图，输出经纬度和公开字段。
-- `get_upcoming_sales_near` 使用PostGIS执行半径、时间和分类查询，并返回距离。
-- 所有写入由服务器端service role完成。
+- `create_self_sale`：原子创建活动、私密信息、两类 token 和验证邮件 outbox。
+- `verify_sale_token`：校验哈希、用途、期限和状态后发布活动。
+- `resolve_manage_sale_id`：把原始管理 token 解析为可管理活动 id。
+- `issue_sale_recovery_tokens`：按邮箱轮换管理 token，并写入恢复邮件 outbox。
+- `get_upcoming_sales_near`：PostGIS 半径查询和距离排序。
+- `get_nearby_suburbs`：PostGIS suburb 距离排序。
+- `get_indexable_suburbs`：目录和 sitemap 的内容质量集合查询。
+- `consume_rate_limit`：原子计数并返回请求是否允许。
 
-## 本地数据
+## 变更链路
 
-`supabase/seed.sql` 创建五个Perth suburb和二十条未来演示活动，其中每五条包含一条外部来源记录。
+Schema 变化必须按以下顺序完成：新增 migration → 本地 reset/lint → 生成数据库类型 → 模块 schema/mapper → 查询或命令 → UI/API → RLS/契约/E2E 测试 → 更新本文与架构基线。

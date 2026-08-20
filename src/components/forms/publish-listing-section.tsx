@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SALE_CATEGORIES } from "@/config/constants";
 
 type PublishListingSectionProps = {
-  demoMode: boolean;
   files: File[];
   form: PublishFormApi;
   onRemoveFile: (index: number) => void;
@@ -17,7 +16,6 @@ type PublishListingSectionProps = {
 };
 
 export function PublishListingSection({
-  demoMode,
   files,
   form,
   onRemoveFile,
@@ -105,12 +103,6 @@ export function PublishListingSection({
                 </li>
               ))}
             </ul>
-          ) : null}
-          {demoMode && files.length > 0 ? (
-            <p className="text-muted-foreground text-xs">
-              Photo names are previewed locally; files will persist after
-              Supabase is connected.
-            </p>
           ) : null}
         </div>
       </CardContent>

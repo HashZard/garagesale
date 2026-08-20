@@ -8,15 +8,15 @@ import {
 } from "@/lib/admin-session";
 import { getServerEnv } from "@/lib/env";
 
-export const DEMO_ADMIN_SECRET = "garage-sale-local-admin-secret-change-me";
+export const LOCAL_ADMIN_SECRET = "garage-sale-local-admin-secret-change-me";
 
 export function getAdminSecret(): string | null {
   const environment = getServerEnv();
   return (
     environment.ADMIN_SECRET ??
-    (environment.APP_DATA_MODE === "demo" &&
+    (environment.DEPLOYMENT_ENV === "local" &&
     process.env.NODE_ENV !== "production"
-      ? DEMO_ADMIN_SECRET
+      ? LOCAL_ADMIN_SECRET
       : null)
   );
 }

@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "garagesale-au",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "garagesale-au",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "garagesale-opennext-cache",
+      "preview_bucket_name": "garagesale-opennext-cache-preview",
+    },
+    {
+      "binding": "SALE_PHOTOS",
+      "bucket_name": "garagesale-photos",
+      "preview_bucket_name": "garagesale-photos-preview",
+    },
+    {
+      "binding": "BACKUPS",
+      "bucket_name": "garagesale-backups",
+      "preview_bucket_name": "garagesale-backups-preview",
+    },
+  ],
+  "images": {
+    "binding": "IMAGES",
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": true },
+  },
+}

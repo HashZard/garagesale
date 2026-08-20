@@ -1,9 +1,13 @@
 import { Geist } from "next/font/google";
 
-import { PrivacyAwareAnalytics } from "@/components/privacy-aware-analytics";
+import { PublicAnalytics } from "@/components/public-analytics";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getSiteUrl, SITE_CONFIG } from "@/config/site";
+import {
+  getSiteUrl,
+  isSearchEngineIndexingEnabled,
+  SITE_CONFIG,
+} from "@/config/site";
 
 import type { Metadata } from "next";
 
@@ -34,6 +38,9 @@ export const metadata: Metadata = {
     title: SITE_CONFIG.defaultTitle,
     description: SITE_CONFIG.description,
   },
+  robots: isSearchEngineIndexingEnabled()
+    ? undefined
+    : { index: false, follow: false, noarchive: true },
 };
 
 export default function RootLayout({
@@ -42,12 +49,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.variable}>
+    <html lang="en-AU" className={geistSans.variable}>
       <body className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
-        {process.env.VERCEL === "1" ? <PrivacyAwareAnalytics /> : null}
+        <PublicAnalytics />
       </body>
     </html>
   );

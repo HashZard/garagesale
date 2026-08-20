@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function AdminLoginForm({ demoSecret }: { demoSecret?: string }) {
+export function AdminLoginForm({ localSecret }: { localSecret?: string }) {
   const [secret, setSecret] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -34,12 +34,12 @@ export function AdminLoginForm({ demoSecret }: { demoSecret?: string }) {
 
   return (
     <form onSubmit={submit} className="grid gap-4">
-      {demoSecret ? (
+      {localSecret ? (
         <Alert>
           <LockKeyhole aria-hidden="true" />
-          <AlertTitle>Local demo secret</AlertTitle>
+          <AlertTitle>Local admin secret</AlertTitle>
           <AlertDescription>
-            <code className="break-all">{demoSecret}</code>
+            <code className="break-all">{localSecret}</code>
           </AlertDescription>
         </Alert>
       ) : null}

@@ -1,22 +1,20 @@
-import { z } from "zod";
-
 import { MANAGE_RATE_LIMIT_PER_HOUR } from "@/config/constants";
 import { setManagedSaleStatus, updateManagedSale } from "@/lib/db/mutations";
 import {
   AddressVerificationError,
   verifyAustralianAddress,
 } from "@/lib/geo/mapbox";
+import {
+  clearManageSession,
+  getManageSessionToken,
+} from "@/lib/manage-session";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { manageSaleSchema } from "@/lib/validation/sale";
 
-type RouteContext = { params: Promise<{ token: string }> };
-const tokenSchema = z.uuid();
-
-export async function PATCH(request: Request, context: RouteContext) {
-  const { token } = await context.params;
-  if (!tokenSchema.safeParse(token).success) {
+export async function PATCH(request: Request) {
+  const token = await getManageSessionToken();
+  if (!token)
     return Response.json({ error: "Listing not found" }, { status: 404 });
-  }
 
   const allowed = await consumeRateLimit({
     action: "manage-update",
@@ -62,16 +60,17 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
-  const { token } = await context.params;
-  if (!tokenSchema.safeParse(token).success) {
+export async function DELETE() {
+  const token = await getManageSessionToken();
+  if (!token)
     return Response.json({ error: "Listing not found" }, { status: 404 });
-  }
   try {
     const removed = await setManagedSaleStatus(token, "removed");
-    return removed
-      ? Response.json({ ok: true })
-      : Response.json({ error: "Listing not found" }, { status: 404 });
+    if (!removed) {
+      return Response.json({ error: "Listing not found" }, { status: 404 });
+    }
+    await clearManageSession();
+    return Response.json({ ok: true });
   } catch {
     return Response.json(
       { error: "We couldn't remove this listing. Please try again." },

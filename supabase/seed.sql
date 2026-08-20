@@ -9,7 +9,7 @@ values
   ('Bicton', 'WA', '6157', 'bicton-wa-6157', extensions.st_setsrid(extensions.st_makepoint(115.7830, -32.0270), 4326)::extensions.geography)
 on conflict (slug) do nothing;
 
-with demo_sales as (
+with seed_sales as (
   select * from (values
     (1, 'Fremantle', '6160', '12 Hampton Road, Fremantle WA 6160', 115.7490, -32.0580, 'Big Moving Sale — Furniture & Tools', array['furniture', 'tools']::text[]),
     (2, 'Fremantle', '6160', '8 Ord Street, Fremantle WA 6160', 115.7530, -32.0500, 'Vintage Finds and Household Sale', array['collectables', 'household']::text[]),
@@ -32,8 +32,9 @@ with demo_sales as (
     (19, 'Bicton', '6157', '33 View Terrace, Bicton WA 6157', 115.7890, -32.0250, 'Designer Clothes and Accessories', array['clothing', 'collectables']::text[]),
     (20, 'Bicton', '6157', '10 Point Walter Road, Bicton WA 6157', 115.7820, -32.0230, 'Family Sale — Something for Everyone', array['kids-baby', 'household']::text[])
   ) as rows(sequence_number, suburb, postcode, address, longitude, latitude, title, categories)
-)
+), inserted_sales as (
 insert into public.sales (
+  id,
   title,
   description,
   address,
@@ -46,14 +47,13 @@ insert into public.sales (
   categories,
   source,
   source_url,
-  contact_email,
-  manage_token,
   status,
   email_verified_at
 )
 select
+  ('00000000-0000-4000-8000-' || lpad(sequence_number::text, 12, '0'))::uuid,
   title,
-  'Demo listing for local development. Plenty of useful items available — arrive early for the best selection.',
+  'Seed listing for local development. Plenty of useful items available — arrive early for the best selection.',
   address,
   suburb,
   'WA',
@@ -64,9 +64,16 @@ select
   categories,
   case when sequence_number % 5 = 0 then 'gumtree' else 'self' end,
   case when sequence_number % 5 = 0 then 'https://example.com/source/' || sequence_number else null end,
-  case when sequence_number % 5 = 0 then null else 'seller' || sequence_number || '@example.com' end,
-  case when sequence_number % 5 = 0 then null else gen_random_uuid() end,
   'published',
   case when sequence_number % 5 = 0 then null else now() end
-from demo_sales;
+from seed_sales
+returning id, source, end_at
+)
+insert into public.sale_private_details (sale_id, contact_email, retain_until)
+select
+  id,
+  'seller-' || left(id::text, 8) || '@example.com',
+  end_at + interval '90 days'
+from inserted_sales
+where source = 'self';
 

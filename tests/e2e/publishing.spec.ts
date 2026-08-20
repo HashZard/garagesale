@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("演示模式完成发布、验证、修改和取消闭环", async ({ page }, testInfo) => {
+test("本地数据库完成发布、验证、修改和取消闭环", async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes("desktop"), "仅桌面项目运行一次");
   const uniqueTitle = `E2E moving sale ${Date.now()}`;
   await page.goto("/publish");
@@ -17,10 +17,16 @@ test("演示模式完成发布、验证、修改和取消闭环", async ({ page 
   await expect(
     page.getByRole("heading", { name: "Check your inbox" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Confirm demo listing" }).click();
-  await expect(page).toHaveURL(/\/manage\/[0-9a-f-]+\?verified=1/, {
+  await page.getByRole("link", { name: "Confirm local listing" }).click();
+  await expect(page).toHaveURL(/\/manage\?verified=1$/, {
     timeout: 20_000,
   });
+  const manageCookie = (await page.context().cookies()).find(
+    ({ name }) => name === "garage-sale-manage-session",
+  );
+  expect(manageCookie?.value).toMatch(/^[a-f0-9]{64}$/);
+  expect(manageCookie?.httpOnly).toBe(true);
+  expect(manageCookie?.secure).toBe(false);
   await expect(page.getByText("Your listing is live")).toBeVisible();
 
   await page.getByLabel("Title").fill(`${uniqueTitle} updated`);
@@ -34,7 +40,10 @@ test("演示模式完成发布、验证、修改和取消闭环", async ({ page 
 
 test("找回链接接口保持中性响应", async ({ request }) => {
   const response = await request.post("/api/recover", {
-    data: { email: "unknown@example.test" },
+    data: {
+      email: "unknown@example.test",
+      turnstileToken: "local-turnstile-bypass",
+    },
   });
   expect(response.ok()).toBe(true);
   const result = (await response.json()) as { message: string };

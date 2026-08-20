@@ -7,13 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { SaleStatus } from "@/types/sale";
 
-export function ManageLocationSection({
-  demoMode,
-  form,
-}: {
-  demoMode: boolean;
-  form: ManageFormApi;
-}) {
+export function ManageLocationSection({ form }: { form: ManageFormApi }) {
   const errors = form.formState.errors;
   return (
     <Card>
@@ -36,15 +30,15 @@ export function ManageLocationSection({
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="grid gap-2 text-sm font-medium">
             Suburb
-            <Input {...form.register("suburb")} readOnly={!demoMode} />
+            <Input {...form.register("suburb")} readOnly />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             State
-            <Input {...form.register("state")} readOnly={!demoMode} />
+            <Input {...form.register("state")} readOnly />
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Postcode
-            <Input {...form.register("postcode")} readOnly={!demoMode} />
+            <Input {...form.register("postcode")} readOnly />
           </label>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">

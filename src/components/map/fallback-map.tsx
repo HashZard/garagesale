@@ -3,11 +3,11 @@ import Link from "next/link";
 
 import type { NearbySale } from "@/types/sale";
 
-type DemoMapProps = {
+type FallbackMapProps = {
   sales: NearbySale[];
 };
 
-export function DemoMap({ sales }: DemoMapProps) {
+export function FallbackMap({ sales }: FallbackMapProps) {
   const latitudes = sales.map((sale) => sale.latitude);
   const longitudes = sales.map((sale) => sale.longitude);
   const minimumLatitude = Math.min(...latitudes, -32.1);

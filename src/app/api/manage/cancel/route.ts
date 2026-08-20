@@ -1,14 +1,10 @@
-import { z } from "zod";
-
 import { setManagedSaleStatus } from "@/lib/db/mutations";
+import { getManageSessionToken } from "@/lib/manage-session";
 
-type RouteContext = { params: Promise<{ token: string }> };
-
-export async function POST(_request: Request, context: RouteContext) {
-  const { token } = await context.params;
-  if (!z.uuid().safeParse(token).success) {
+export async function POST() {
+  const token = await getManageSessionToken();
+  if (!token)
     return Response.json({ error: "Listing not found" }, { status: 404 });
-  }
   try {
     const cancelled = await setManagedSaleStatus(token, "cancelled");
     return cancelled

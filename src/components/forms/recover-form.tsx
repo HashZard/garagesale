@@ -1,9 +1,9 @@
 "use client";
 
 import { LoaderCircle, MailCheck } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
+import { TurnstileWidget } from "@/components/forms/turnstile-widget";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ export function RecoverForm() {
   const [message, setMessage] = useState("");
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,7 +24,7 @@ export function RecoverForm() {
       const response = await fetch("/api/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
       const result = (await response.json()) as {
         message: string;
@@ -54,7 +55,8 @@ export function RecoverForm() {
             placeholder="you@example.com"
           />
         </label>
-        <Button type="submit" size="lg" disabled={pending}>
+        <TurnstileWidget onToken={setTurnstileToken} />
+        <Button type="submit" size="lg" disabled={pending || !turnstileToken}>
           {pending ? (
             <LoaderCircle className="animate-spin" aria-hidden="true" />
           ) : null}
@@ -75,9 +77,9 @@ export function RecoverForm() {
             Email delivery is in preview mode. Open a private management link:
             <span className="mt-3 flex flex-col gap-2">
               {previewUrls.map((url, index) => (
-                <Link key={url} href={url} className="font-medium">
-                  Manage demo listing {index + 1}
-                </Link>
+                <a key={url} href={url} className="font-medium">
+                  Manage local listing {index + 1}
+                </a>
               ))}
             </span>
           </AlertDescription>

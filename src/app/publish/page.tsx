@@ -1,7 +1,5 @@
 import { Container } from "@/components/container";
 import { PublishForm } from "@/components/forms/publish-form";
-import { DEMO_SUBURBS } from "@/lib/db/demo-data";
-import { getServerEnv } from "@/lib/env";
 
 import type { Metadata } from "next";
 
@@ -13,8 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default function PublishPage() {
-  const demoMode = getServerEnv().APP_DATA_MODE === "demo";
-
   return (
     <Container className="max-w-4xl py-8 sm:py-12">
       <div className="mb-8 max-w-2xl">
@@ -29,7 +25,7 @@ export default function PublishPage() {
           local buyers.
         </p>
       </div>
-      <PublishForm demoMode={demoMode} demoSuburbs={DEMO_SUBURBS} />
+      <PublishForm />
     </Container>
   );
 }

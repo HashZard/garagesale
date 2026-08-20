@@ -214,7 +214,7 @@ as $$
     extensions.st_distance(
       s.location,
       extensions.st_setsrid(extensions.st_makepoint(search_longitude, search_latitude), 4326)::extensions.geography
-    ) / 1000.0
+    ) / 1000.0 as distance_km
   from public.sales s
   where s.status = 'published'
     and s.end_at > now()

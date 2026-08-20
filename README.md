@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-MVP 代码已覆盖搜索、地图、详情、发布、邮件验证、私人管理、链接找回、SEO 页面和最小后台。Supabase 已配置为开发、Preview 与 Production 共用的生产项目；Mapbox、Resend、Vercel 和正式域名仍待配置，详见[外部服务配置备忘](docs/external-setup-checklist.md)。本地开发使用 `.env.local`，不得提交真实密钥。
+项目正在按新的生产架构重构：Next.js 通过 OpenNext 运行于 Cloudflare Workers，Postgres/PostGIS 使用 Supabase，图片与独立备份使用 Cloudflare R2。公开活动、卖家邮箱、哈希 token 和邮件 outbox 已分层。本地、staging 与 production 必须使用独立资源，详见[架构基线](docs/architecture/garage-sale-architecture.md)。
 
 ## 环境要求
 
@@ -23,16 +23,16 @@ pnpm dev
 
 浏览器访问 `http://localhost:3000`。
 
-默认配置为 `APP_DATA_MODE=demo` 和 `EMAIL_DELIVERY_MODE=preview`：使用本机临时演示数据，邮件验证链接直接显示在页面，不依赖任何外部服务。演示活动只写入操作系统临时目录，可能随系统清理而消失，不能视为生产持久化。
+本地开发使用 Supabase CLI 启动真实 Postgres/PostGIS、RLS、Storage 兼容服务和 seed 数据。不存在文件型 demo 数据路径。`EMAIL_DELIVERY_MODE=preview` 时验证与管理链接直接显示在页面；图片由 Wrangler 的本地 R2 binding 保存。
 
 ## 运行模式
 
-| 配置                  | 可选值               | 用途                                  |
-| --------------------- | -------------------- | ------------------------------------- |
-| `APP_DATA_MODE`       | `demo` / `supabase`  | 本机临时演示数据或真实数据库与Storage |
-| `EMAIL_DELIVERY_MODE` | `preview` / `resend` | 页面显示测试链接或发送真实邮件        |
+| 配置                  | 可选值                             | 用途                           |
+| --------------------- | ---------------------------------- | ------------------------------ |
+| `DEPLOYMENT_ENV`      | `local` / `staging` / `production` | 环境隔离和外部服务强制规则     |
+| `EMAIL_DELIVERY_MODE` | `preview` / `resend`               | 页面显示测试链接或发送真实邮件 |
 
-切换到 `supabase` 时，服务端会强制检查 Supabase 和两类 Mapbox token；切换到 `resend` 时会强制检查 Resend key 与发件人。
+staging 与 production 会强制检查 Supabase、Mapbox 和 Turnstile 配置；切换到 `resend` 时会检查 Resend key 与发件人。
 
 ## 本地数据库
 
@@ -58,6 +58,8 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 pnpm audit
 pnpm build
+pnpm build:worker
+pnpm preview
 pnpm check
 ```
 
@@ -73,4 +75,4 @@ pnpm check
 
 ## 部署
 
-部署目标为 Vercel + Supabase。当前不执行真实部署；完成外部配置后，按照 [部署与外部服务接入](docs/deployment.md) 和备忘清单逐项接入并执行生产验收。
+部署目标为 Cloudflare Workers + Supabase。`pnpm deploy` 会修改外部环境，只能在获得部署授权并完成 [部署与外部服务接入](docs/deployment.md) 的账户、secret、R2 bucket 和生产验收后执行。

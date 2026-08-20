@@ -7,7 +7,7 @@ test("首页、搜索、详情和SEO页面可访问", async ({ page }, testInfo)
       name: "Find garage sales near you this weekend",
     }),
   ).toBeVisible();
-  await expect(page.getByText("Demo listings")).toBeVisible();
+  await expect(page.getByText(/\d+ garage sales found/)).toBeVisible();
   await expect(page.getByRole("main")).toBeVisible();
 
   await page.goto("/?q=Fremantle");
@@ -76,7 +76,7 @@ test("robots和sitemap包含预期规则", async ({ request }) => {
   );
   const robots = await request.get("/robots.txt");
   expect(robots.ok()).toBe(true);
-  await expect(robots.text()).resolves.toContain("Disallow: /manage");
+  await expect(robots.text()).resolves.toContain("Disallow: /");
 
   const sitemap = await request.get("/sitemap.xml");
   expect(sitemap.ok()).toBe(true);

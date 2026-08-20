@@ -1,5 +1,5 @@
 import { PUBLISH_RATE_LIMIT_PER_HOUR } from "@/config/constants";
-import { publishSale } from "@/lib/db/mutations";
+import { publishSale, recordOutboxDelivery } from "@/lib/db/mutations";
 import { sendVerificationEmail } from "@/lib/email/sales";
 import { getServerEnv } from "@/lib/env";
 import {
@@ -9,6 +9,7 @@ import {
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getRequestIp } from "@/lib/request";
 import { publishSaleSchema } from "@/lib/validation/sale";
+import { verifyTurnstile } from "@/platform/security/turnstile";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -26,9 +27,21 @@ export async function POST(request: Request) {
     );
   }
 
+  const requestIp = getRequestIp(request);
+  const turnstileToken =
+    body && typeof body === "object" && "turnstileToken" in body
+      ? String(body.turnstileToken)
+      : undefined;
+  if (!(await verifyTurnstile(turnstileToken, requestIp))) {
+    return Response.json(
+      { error: "Please complete the bot protection challenge" },
+      { status: 400 },
+    );
+  }
+
   const allowed = await consumeRateLimit({
     action: "publish",
-    key: getRequestIp(request),
+    key: requestIp,
     maxRequests: PUBLISH_RATE_LIMIT_PER_HOUR,
     windowSeconds: 3600,
   });
@@ -44,15 +57,31 @@ export async function POST(request: Request) {
   try {
     const verifiedInput = await verifyAustralianAddress(parsed.data);
     const result = await publishSale(verifiedInput);
-    await sendVerificationEmail({
-      email: verifiedInput.contactEmail,
-      manageToken: result.manageToken,
-      title: verifiedInput.title,
-    });
+    let emailQueued = false;
+    try {
+      await sendVerificationEmail({
+        email: verifiedInput.contactEmail,
+        manageToken: result.manageToken,
+        title: verifiedInput.title,
+        verificationToken: result.verificationToken,
+      });
+      await recordOutboxDelivery(result.outboxId, {});
+    } catch (emailError) {
+      emailQueued = true;
+      await recordOutboxDelivery(result.outboxId, {
+        error:
+          emailError instanceof Error
+            ? emailError.message
+            : "Email send failed",
+      });
+    }
     const preview = getServerEnv().EMAIL_DELIVERY_MODE === "preview";
     return Response.json({
       ok: true,
-      previewVerifyUrl: preview ? `/verify/${result.manageToken}` : undefined,
+      emailQueued,
+      previewVerifyUrl: preview
+        ? `/verify/${result.verificationToken}?manage=${result.manageToken}`
+        : undefined,
     });
   } catch (error) {
     if (error instanceof AddressVerificationError) {

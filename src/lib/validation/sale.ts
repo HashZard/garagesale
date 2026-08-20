@@ -22,12 +22,14 @@ const dateSchema = z
 const timeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Choose a valid time");
-const httpsUrlSchema = z
-  .url()
-  .refine(
-    (value) => new URL(value).protocol === "https:",
-    "Photo URLs must use HTTPS",
-  );
+const mediaUrlSchema = z.string().refine((value) => {
+  if (/^\/media\/[a-zA-Z0-9/._-]+$/.test(value)) return true;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}, "Photos must use a GarageSale media path or HTTPS URL");
 
 const saleFields = {
   address: z.string().trim().min(5, "Choose a full street address"),
@@ -37,7 +39,7 @@ const saleFields = {
   latitude: z.number().min(-44).max(-10),
   localDate: dateSchema,
   longitude: z.number().min(112).max(154),
-  photos: z.array(httpsUrlSchema).max(MAX_PHOTO_COUNT).default([]),
+  photos: z.array(mediaUrlSchema).max(MAX_PHOTO_COUNT).default([]),
   postcode: z.string().regex(/^\d{4}$/, "Enter a four digit postcode"),
   startTime: timeSchema,
   state: stateSchema,

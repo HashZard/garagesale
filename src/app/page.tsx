@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Container } from "@/components/container";
@@ -7,14 +7,32 @@ import { SuburbSearch } from "@/components/forms/suburb-search";
 import { ResultsExplorer } from "@/components/sale/results-explorer";
 import { Button } from "@/components/ui/button";
 import { SALE_CATEGORIES } from "@/config/constants";
+import { isSearchEngineIndexingEnabled } from "@/config/site";
 import { getUpcomingSales } from "@/lib/db/sales";
 import { searchSuburbs } from "@/lib/db/suburbs";
-import { getServerEnv } from "@/lib/env";
 import type { DateFilter, SaleCategory, SaleSearchFilters } from "@/types/sale";
+
+import type { Metadata } from "next";
 
 type HomePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({
+  searchParams,
+}: HomePageProps): Promise<Metadata> {
+  const parameters = await searchParams;
+  const hasSearch = Object.values(parameters).some((value) =>
+    Array.isArray(value) ? value.length > 0 : Boolean(value),
+  );
+  return {
+    alternates: { canonical: "/" },
+    robots:
+      isSearchEngineIndexingEnabled() && !hasSearch
+        ? undefined
+        : { index: false, follow: false },
+  };
+}
 
 function getSingleValue(
   value: string | string[] | undefined,
@@ -69,18 +87,11 @@ export default async function Home({ searchParams }: HomePageProps) {
     suburbLabel,
   };
   const sales = await getUpcomingSales(filters);
-  const demoMode = getServerEnv().APP_DATA_MODE === "demo";
 
   return (
     <>
       <section className="from-secondary/80 to-background border-b bg-gradient-to-b">
         <Container className="py-10 sm:py-14">
-          {demoMode ? (
-            <div className="bg-card text-muted-foreground mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm">
-              <Sparkles className="text-primary size-3.5" aria-hidden="true" />
-              Demo listings while external services are being connected
-            </div>
-          ) : null}
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">
               Find garage sales near you this weekend

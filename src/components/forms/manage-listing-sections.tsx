@@ -53,14 +53,12 @@ export function ManageDetailsSection({ form }: { form: ManageFormApi }) {
 }
 
 export function ManagePhotosSection({
-  demoMode,
   existingPhotos,
   files,
   onAddPhotos,
   onRemoveExisting,
   onRemoveFile,
 }: {
-  demoMode: boolean;
   existingPhotos: string[];
   files: File[];
   onAddPhotos: (files: FileList | null) => void;
@@ -119,11 +117,6 @@ export function ManagePhotosSection({
             </button>
           </div>
         ))}
-        {demoMode && files.length > 0 ? (
-          <p className="text-muted-foreground text-xs">
-            New files are only previewed until Supabase Storage is connected.
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );
