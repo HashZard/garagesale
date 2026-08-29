@@ -1,13 +1,12 @@
 "use client";
 
-import { LoaderCircle, LockKeyhole } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function AdminLoginForm({ localSecret }: { localSecret?: string }) {
+export function AdminLoginForm() {
   const [secret, setSecret] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -34,15 +33,6 @@ export function AdminLoginForm({ localSecret }: { localSecret?: string }) {
 
   return (
     <form onSubmit={submit} className="grid gap-4">
-      {localSecret ? (
-        <Alert>
-          <LockKeyhole aria-hidden="true" />
-          <AlertTitle>Local admin secret</AlertTitle>
-          <AlertDescription>
-            <code className="break-all">{localSecret}</code>
-          </AlertDescription>
-        </Alert>
-      ) : null}
       <label className="grid gap-2 text-sm font-medium">
         Admin secret
         <Input

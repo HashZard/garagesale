@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 export function RecoverForm() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
 
@@ -19,19 +18,14 @@ export function RecoverForm() {
     event.preventDefault();
     setPending(true);
     setMessage("");
-    setPreviewUrls([]);
     try {
       const response = await fetch("/api/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, turnstileToken }),
       });
-      const result = (await response.json()) as {
-        message: string;
-        previewManageUrls?: string[];
-      };
+      const result = (await response.json()) as { message: string };
       setMessage(result.message);
-      setPreviewUrls(result.previewManageUrls ?? []);
     } catch {
       setMessage(
         "If active listings match that email, we'll send their private management links.",
@@ -68,21 +62,6 @@ export function RecoverForm() {
           <MailCheck aria-hidden="true" />
           <AlertTitle>Check your inbox</AlertTitle>
           <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      ) : null}
-      {previewUrls.length > 0 ? (
-        <Alert>
-          <AlertTitle>Local email preview</AlertTitle>
-          <AlertDescription>
-            Email delivery is in preview mode. Open a private management link:
-            <span className="mt-3 flex flex-col gap-2">
-              {previewUrls.map((url, index) => (
-                <a key={url} href={url} className="font-medium">
-                  Manage local listing {index + 1}
-                </a>
-              ))}
-            </span>
-          </AlertDescription>
         </Alert>
       ) : null}
     </div>

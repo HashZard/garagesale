@@ -43,7 +43,7 @@ pnpm check          # 完整质量检查
 - 不在页面或组件中直接查询 Supabase；数据库访问只进入 `src/modules/*/queries.ts`、`commands.ts` 与 `src/platform/database`。
 - 客户端和服务端共用所属业务模块中的 Zod schema。
 - 公开活动、卖家联系方式和访问 token 必须分表；token 只保存 SHA-256 哈希。
-- 本地、staging 与 production 不得共用数据库或 Storage/R2 namespace。
+- 开发与部署使用同一套 Supabase、R2 及外部服务配置；禁止向该共享项目导入开发 seed 或执行破坏性 reset。
 - 任意写链路必须可重试；数据库写入和邮件 outbox 必须在同一事务完成。
 - 不提交任何真实密钥；外部人工配置及时更新备忘清单。
 - 新决策域写入 `adr/`；只追溯旧实现时查看 `docs/decisions.md`。

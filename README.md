@@ -4,14 +4,13 @@
 
 ## 当前状态
 
-项目正在按新的生产架构重构：Next.js 通过 OpenNext 运行于 Cloudflare Workers，Postgres/PostGIS 使用 Supabase，图片与独立备份使用 Cloudflare R2。公开活动、卖家邮箱、哈希 token 和邮件 outbox 已分层。本地、staging 与 production 必须使用独立资源，详见[架构基线](docs/architecture/garage-sale-architecture.md)。
+项目通过 Next.js 与 OpenNext 运行于 Cloudflare Workers，Postgres/PostGIS 使用 Supabase，图片与独立备份使用 Cloudflare R2。公开活动、卖家邮箱、哈希 token 和邮件 outbox 已分层。开发与部署共用一套外部服务配置，详见[架构基线](docs/architecture/garage-sale-architecture.md)。
 
 ## 环境要求
 
 - Node.js 24 LTS
 - pnpm 10
-- Supabase CLI（执行本地数据库和迁移时需要）
-- Docker Desktop或兼容运行时（本地Supabase需要）
+- Supabase CLI（执行远端 migration 时需要）
 
 ## 本地运行
 
@@ -23,29 +22,19 @@ pnpm dev
 
 浏览器访问 `http://localhost:3000`。
 
-本地开发使用 Supabase CLI 启动真实 Postgres/PostGIS、RLS、Storage 兼容服务和 seed 数据。不存在文件型 demo 数据路径。`EMAIL_DELIVERY_MODE=preview` 时验证与管理链接直接显示在页面；图片由 Wrangler 的本地 R2 binding 保存。
+开发服务器与部署实例都连接 `.env.local` 中的同一套 Supabase、R2、Mapbox、Turnstile 和 Resend 配置。发布测试会写入共享数据并发送真实邮件；仅在已获得授权时执行。
 
-## 运行模式
+## 数据库迁移
 
-| 配置                  | 可选值                             | 用途                           |
-| --------------------- | ---------------------------------- | ------------------------------ |
-| `DEPLOYMENT_ENV`      | `local` / `staging` / `production` | 环境隔离和外部服务强制规则     |
-| `EMAIL_DELIVERY_MODE` | `preview` / `resend`               | 页面显示测试链接或发送真实邮件 |
-
-staging 与 production 会强制检查 Supabase、Mapbox 和 Turnstile 配置；切换到 `resend` 时会检查 Resend key 与发件人。
-
-## 本地数据库
-
-Docker可用后执行：
+链接共享项目后，先审查再执行迁移：
 
 ```bash
-pnpm db:start
-pnpm db:reset
-pnpm db:lint
-pnpm db:types
+pnpm exec supabase link --project-ref <project-ref>
+pnpm exec supabase db push --dry-run
+pnpm exec supabase db push
 ```
 
-`db:types` 会用本地数据库生成结果覆盖临时的 `src/types/database.generated.ts`。停止容器使用 `pnpm db:stop`。
+不得对共享项目使用 `db reset --linked` 或 `--include-seed`。
 
 ## 常用命令
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, LoaderCircle, ShieldCheck } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -29,7 +29,7 @@ import {
 export function PublishForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [formError, setFormError] = useState("");
-  const [previewVerifyUrl, setPreviewVerifyUrl] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [addressSuggestions, setAddressSuggestions] = useState<MapboxFeature[]>(
     [],
@@ -146,11 +146,10 @@ export function PublishForm() {
       });
       const result = (await response.json()) as {
         error?: string;
-        previewVerifyUrl?: string;
       };
       if (!response.ok)
         throw new Error(result.error ?? "Could not publish sale");
-      setPreviewVerifyUrl(result.previewVerifyUrl ?? "sent");
+      setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       setFormError(
@@ -161,7 +160,7 @@ export function PublishForm() {
     }
   }
 
-  if (previewVerifyUrl) {
+  if (submitted) {
     return (
       <Card className="mx-auto max-w-2xl">
         <CardContent className="flex flex-col items-center p-8 text-center sm:p-12">
@@ -173,19 +172,6 @@ export function PublishForm() {
             We sent a private confirmation link. Open it to make your garage
             sale live.
           </p>
-          {previewVerifyUrl !== "sent" ? (
-            <Alert className="mt-6 text-left">
-              <ShieldCheck aria-hidden="true" />
-              <AlertTitle>Local email preview</AlertTitle>
-              <AlertDescription>
-                Resend is not connected. Use this link to test the verification
-                flow.
-              </AlertDescription>
-              <Button asChild className="mt-4">
-                <a href={previewVerifyUrl}>Confirm local listing</a>
-              </Button>
-            </Alert>
-          ) : null}
         </CardContent>
       </Card>
     );

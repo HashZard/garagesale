@@ -2,7 +2,6 @@ import { RECOVER_RATE_LIMIT_PER_HOUR } from "@/config/constants";
 import { issueRecoveryTokens } from "@/lib/db/manage";
 import { recordOutboxDelivery } from "@/lib/db/mutations";
 import { sendRecoveryEmail } from "@/lib/email/sales";
-import { getServerEnv } from "@/lib/env";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { getRequestIp } from "@/lib/request";
 import { recoverLinkSchema } from "@/lib/validation/sale";
@@ -44,7 +43,6 @@ export async function POST(request: Request) {
     }),
   ]);
 
-  let previewManageUrls: string[] | undefined;
   if (ipAllowed && emailAllowed) {
     let issuedSales: Awaited<ReturnType<typeof issueRecoveryTokens>> = [];
     try {
@@ -63,11 +61,6 @@ export async function POST(request: Request) {
       await Promise.all(
         issuedSales.map(({ outboxId }) => recordOutboxDelivery(outboxId, {})),
       );
-      if (getServerEnv().EMAIL_DELIVERY_MODE === "preview") {
-        previewManageUrls = issuedSales.map(
-          ({ manageToken }) => `/manage/${manageToken}`,
-        );
-      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Recovery email send failed";
@@ -80,5 +73,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return Response.json({ message: neutralMessage, previewManageUrls });
+  return Response.json({ message: neutralMessage });
 }

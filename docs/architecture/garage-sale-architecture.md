@@ -4,7 +4,7 @@
 >
 > 决策日期：2026-08-20
 >
-> 关联决定：[ADR-0001](../../adr/0001-platform-and-runtime.md)
+> 关联决定：[ADR-0001](../../adr/0001-platform-and-runtime.md)、[ADR-0002](../../adr/0002-shared-external-services.md)
 
 ## 1. 目标与边界
 
@@ -23,7 +23,7 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 | 层级       | 选型                        | 责任                                            |
 | ---------- | --------------------------- | ----------------------------------------------- |
 | Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components |
-| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存、静态资产、预览部署     |
+| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存与静态资产               |
 | 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流      |
 | 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                    |
 | 地图       | Mapbox                      | 交互地图、地址建议、服务端地址验证              |
@@ -83,13 +83,9 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 8. 环境
 
-| 环境            | 数据                                       | 搜索引擎 | 用途                   |
-| --------------- | ------------------------------------------ | -------- | ---------------------- |
-| Local/Test      | 本地 Supabase + R2 模拟或独立开发 bucket   | noindex  | 开发、迁移、集成测试   |
-| Staging/Preview | 独立 staging 数据库与 bucket，只含虚构数据 | noindex  | 客户验收、workerd 验证 |
-| Production      | 独立 production 数据库与 bucket            | index    | 正式服务               |
+开发、预览与正式实例共用同一个 Supabase 项目、R2 bucket、Mapbox、Turnstile、Resend 及站点 URL。应用没有环境模式、demo store、邮件预览或安全绕过；每次开发操作均按真实服务路径执行。
 
-删除 `APP_DATA_MODE` 与文件型 demo store。本地种子数据只由 `supabase/seed.sql` 创建。邮件测试使用显式测试适配器，不进入生产构建。
+共享项目不得导入 `supabase/seed.sql` 或执行任何 reset。migration 必须先审查 dry run 并确认备份可用后再应用。
 
 ## 9. SEO 基线
 

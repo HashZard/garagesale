@@ -7,7 +7,6 @@ import { SuburbSearch } from "@/components/forms/suburb-search";
 import { ResultsExplorer } from "@/components/sale/results-explorer";
 import { Button } from "@/components/ui/button";
 import { SALE_CATEGORIES } from "@/config/constants";
-import { isSearchEngineIndexingEnabled } from "@/config/site";
 import { getUpcomingSales } from "@/lib/db/sales";
 import { searchSuburbs } from "@/lib/db/suburbs";
 import type { DateFilter, SaleCategory, SaleSearchFilters } from "@/types/sale";
@@ -27,10 +26,7 @@ export async function generateMetadata({
   );
   return {
     alternates: { canonical: "/" },
-    robots:
-      isSearchEngineIndexingEnabled() && !hasSearch
-        ? undefined
-        : { index: false, follow: false },
+    robots: hasSearch ? { index: false, follow: false } : undefined,
   };
 }
 

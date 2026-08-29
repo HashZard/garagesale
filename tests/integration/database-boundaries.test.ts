@@ -5,15 +5,15 @@ import type { Database } from "@/types/database.generated";
 
 const databaseConfigured = Boolean(
   process.env.SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY &&
+  process.env.SUPABASE_SECRET_KEY,
 );
 
 describe.skipIf(!databaseConfigured)("database security boundaries", () => {
-  const url = process.env.SUPABASE_URL!;
+  const url = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
   const anonymous = createClient<Database>(
     url,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "test-key",
     {
       auth: {
         autoRefreshToken: false,
@@ -24,7 +24,7 @@ describe.skipIf(!databaseConfigured)("database security boundaries", () => {
   );
   const service = createClient<Database>(
     url,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.SUPABASE_SECRET_KEY ?? "test-key",
     {
       auth: {
         autoRefreshToken: false,

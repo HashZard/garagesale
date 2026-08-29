@@ -3,11 +3,7 @@ import { Geist } from "next/font/google";
 import { PublicAnalytics } from "@/components/public-analytics";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import {
-  getSiteUrl,
-  isSearchEngineIndexingEnabled,
-  SITE_CONFIG,
-} from "@/config/site";
+import { getSiteUrl, SITE_CONFIG } from "@/config/site";
 
 import type { Metadata } from "next";
 
@@ -38,9 +34,6 @@ export const metadata: Metadata = {
     title: SITE_CONFIG.defaultTitle,
     description: SITE_CONFIG.description,
   },
-  robots: isSearchEngineIndexingEnabled()
-    ? undefined
-    : { index: false, follow: false, noarchive: true },
 };
 
 export default function RootLayout({
