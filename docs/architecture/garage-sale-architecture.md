@@ -83,9 +83,8 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 8. 环境
 
-开发、预览与正式实例共用同一个 Supabase 项目、R2 bucket、Mapbox、Turnstile、Resend 及站点 URL。`DEPLOYMENT_ENV` 仅表示代码运行位置；应用没有 demo store、邮件预览或安全绕过；每次开发操作均按真实服务路径执行。
-
-共享项目不得导入 `supabase/seed.sql` 或执行任何 reset。migration 必须先审查 dry run 并确认备份可用后再应用。
+只有一套环境：本地与线上共用同一个 Supabase 项目、R2 bucket 和外部服务凭据，不存在 staging 或 preview，
+应用中也没有 demo store、邮件预览或安全绕过。理由与完整约束见 [ADR-0002](../../adr/0002-single-shared-environment.md)。
 
 ## 9. SEO 基线
 

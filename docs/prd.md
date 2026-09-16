@@ -1,5 +1,11 @@
 # 产品需求文档：GarageSale.com.au MVP v1
 
+> 本文定义**产品范围、业务规则与验收标准**，是范围问题的唯一权威。
+>
+> 技术选型、目录结构、数据库结构与运行环境**不由本文持有**，以下列文档为准：
+> [架构基线](architecture/garage-sale-architecture.md)、[ADR](../adr/README.md)、
+> [数据模型](data-model.md)、[AGENTS.md](../AGENTS.md)。本文与它们冲突时以它们为准。
+
 ## 1. 文档信息
 
 - 产品：澳大利亚车库售卖活动目录与免费发布工具
@@ -71,48 +77,28 @@ GarageSale 帮助澳大利亚用户：
 
 ## 5. 固定技术栈
 
-| 层级           | 选型                                | 规则                                       |
-| -------------- | ----------------------------------- | ------------------------------------------ |
-| Web 框架       | Next.js App Router + TypeScript     | Server Components 优先，SEO 内容服务端渲染 |
-| 数据库         | Supabase Postgres + PostGIS         | 距离查询必须使用 PostGIS                   |
-| 托管           | Cloudflare Workers + OpenNext       | 开发与部署共用一套外部服务配置             |
-| 地图与地理编码 | Mapbox GL JS + Mapbox Geocoding API | 仅允许澳大利亚结果                         |
-| 邮件           | Resend                              | 发送验证和恢复邮件                         |
-| 样式           | Tailwind CSS v4                     | 移动端优先                                 |
-| 组件           | shadcn/ui + Radix                   | 组件源码保存在仓库内                       |
-| 图标           | lucide-react                        | 不引入第二套图标库                         |
-| 表单           | react-hook-form + Zod               | 客户端和服务端共用校验规则                 |
-| 图片           | Cloudflare R2                       | 最多六张，客户端缩放、服务端验签并同域分发 |
-| 包管理         | pnpm                                | 提交 `pnpm-lock.yaml`                      |
-| Node.js        | Node.js 24 LTS                      | `.nvmrc` 与 `package.json` 固定版本        |
+选型清单与各层职责见[架构基线 §2](architecture/garage-sale-architecture.md#2-系统组成)，本文只规定产品层面的约束：
 
-所需环境变量统一记录在 `.env.example` 和 `docs/external-setup-checklist.md`。真实密钥不得提交到仓库。
+- 技术栈是固定的。不引入第二套组件库、图标库、状态管理或分析供应商；新增运行时依赖须记入 `docs/decisions.md`。
+- 地理编码仅允许澳大利亚结果。
+- 距离查询必须在 PostGIS 内完成，不在应用层计算。
+- Node.js 版本由 `.nvmrc` 与 `package.json` 固定，`pnpm-lock.yaml` 必须提交。
+
+环境变量记录在 `.env.example` 与 [`external-setup-checklist.md`](external-setup-checklist.md)；真实密钥不得提交。
 
 ## 6. 工程规则
 
 ### 6.1 目录边界
 
-```text
-src/app/                 路由、布局和数据装配
-src/components/ui/       通用 UI 原语
-src/components/map/      地图组件
-src/components/sale/     活动业务组件
-src/components/forms/    表单组件
-src/lib/db/              唯一数据库访问入口
-src/lib/geo/             地理编码、距离和时区
-src/lib/email/           邮件发送和模板
-src/lib/seo/             metadata、JSON-LD 和 sitemap
-src/lib/validation/      客户端与服务端共享 Zod schema
-src/config/              品牌信息、分类和限制常量
-src/types/               共享类型和生成的数据库类型
-supabase/migrations/     只追加的 SQL 迁移
-tests/                   单元、集成和端到端测试
-```
+目录结构与分层规则由 [AGENTS.md「目录规则」](../AGENTS.md)持有，本文不再重复。
+
+对本文其余章节有约束力的两条：业务逻辑不进入页面组件；校验规则、分类与限制常量保持单一来源
+（`src/lib/validation` 与 `src/config/constants.ts`）。
 
 ### 6.2 编码规则
 
 - 页面保持轻量，业务逻辑进入 `lib`，UI 进入 `components`。
-- 数据库查询只能写在 `src/lib/db`。
+- 不在页面或组件中直接查询 Supabase；数据库访问的落点见 [AGENTS.md「目录规则」](../AGENTS.md)。
 - TypeScript 开启 `strict` 和 `noUncheckedIndexedAccess`。
 - 禁止无理由使用 `any`、`@ts-ignore` 或整文件关闭规则。
 - 使用 `@/` 别名，避免多层相对路径。
@@ -124,7 +110,7 @@ tests/                   单元、集成和端到端测试
 
 ### 6.3 UI 规则
 
-- 只使用 shadcn/ui 体系，不增加 MUI、Chakra、Ant 等第二套组件库。
+- 只使用 shadcn/ui 体系与 lucide-react 图标，不增加第二套组件库或图标库。
 - 业务组件通过 `components/ui` 使用 Radix，不直接散落 Radix 导入。
 - 颜色使用语义 token，组件内不写原始十六进制颜色。
 - 使用 Tailwind 标准间距和断点，以 375px 为第一设计宽度。
@@ -135,38 +121,36 @@ tests/                   单元、集成和端到端测试
 
 ## 7. 数据模型
 
-### 7.1 `sales`
+数据库结构、分表边界、token 哈希规则和数据库函数由 [`docs/data-model.md`](data-model.md) 持有；
+`supabase/migrations` 是结构的唯一事实来源。本文只规定产品层面的字段约束。
 
-| 字段              | 类型                  | 说明                                                               |
-| ----------------- | --------------------- | ------------------------------------------------------------------ |
-| id                | uuid 主键             | 自动生成                                                           |
-| title             | text                  | 必填，最多 80 字符                                                 |
-| description       | text                  | 可选，最多 2000 字符                                               |
-| address           | text                  | 自发布记录为完整地址；聚合记录为来源提供的地址；按保存内容公开展示 |
-| suburb            | text                  | 标准化 suburb 名称                                                 |
-| state             | text                  | WA、NSW、VIC、QLD、SA、TAS、ACT、NT                                |
-| postcode          | text                  | 四位数字                                                           |
-| location          | geography(Point,4326) | 地图位置                                                           |
-| start_at          | timestamptz           | 开始时间                                                           |
-| end_at            | timestamptz           | 结束时间，必须晚于开始时间                                         |
-| photos            | text[]                | Storage 对象地址，最多六张                                         |
-| categories        | text[]                | 固定分类，可选                                                     |
-| source            | text                  | self、gumtree、facebook、manual、other                             |
-| source_url        | text                  | 外部来源必填                                                       |
-| contact_email     | text                  | self 来源必填，永不公开                                            |
-| manage_token      | uuid                  | self 来源必填且唯一，永不公开                                      |
-| status            | text                  | pending_verification、published、cancelled、removed                |
-| email_verified_at | timestamptz           | 验证时间                                                           |
-| created_at        | timestamptz           | 创建时间                                                           |
-| updated_at        | timestamptz           | 更新时间                                                           |
+### 7.1 产品字段约束
 
-索引：`location` 使用 GIST；`state/suburb`、`start_at` 和 `status` 使用 btree。
+以下数值的唯一来源是 `src/config/constants.ts`，改动须同时更新该文件、Zod schema 与本表：
 
-公开匿名访问只能读取 `status = published AND end_at > now()` 的安全字段，不能读取邮箱和管理 token。所有写操作通过服务器端代码使用 service role 执行。
+| 约束                | 值                                                  |
+| ------------------- | --------------------------------------------------- |
+| 标题长度            | 3–80 字符                                           |
+| 描述长度            | 最多 2000 字符                                      |
+| 图片数量            | 最多 6 张                                           |
+| postcode            | 四位数字                                            |
+| state               | WA、NSW、VIC、QLD、SA、TAS、ACT、NT                 |
+| source              | self、gumtree、facebook、manual、other              |
+| status              | pending_verification、published、cancelled、removed |
+| 默认搜索半径 / 天数 | 25km / 14 天                                        |
+| 附近 suburb 半径    | 10km                                                |
 
-### 7.2 `suburbs`
+### 7.2 隐私边界
 
-字段：`id、name、state、postcode、slug、location`。数据来自允许使用的澳大利亚 postcode/suburb 数据集，来源和署名写入 README。
+卖家邮箱与访问 token **不保存在 `sales` 表**：邮箱在 `sale_private_details`，token 只以 SHA-256
+哈希保存在 `sale_access_tokens`。公开匿名访问只能读取 `status = 'published' AND end_at > now()`
+的公开字段，永远读不到邮箱和 token。所有写操作由服务端使用 secret key 执行。
+
+### 7.3 suburb 数据来源
+
+`suburbs` 数据来自允许使用的澳大利亚 postcode/suburb 数据集。数据集名称、许可证与署名要求
+记录在 [README「数据来源」](../README.md#数据来源)，选型与合规确认项见
+[`docs/external-setup-checklist.md`](external-setup-checklist.md)「数据与合规」。
 
 ## 8. 页面与路由
 
@@ -221,7 +205,7 @@ tests/                   单元、集成和端到端测试
 ### 9.4 验证、管理与恢复
 
 - 验证链接将记录幂等地改为 published，然后跳转管理页。
-- MVP 允许管理 token 同时用于验证和管理。
+- 验证 token 与管理 token 分开生成：验证 token 单次使用且短期有效，管理 token 可撤销并在恢复时轮换。
 - 管理页允许修改所有公开字段；地址改变时重新地理编码。
 - 取消将状态改为 cancelled，并从公开页面移除。
 - 删除将状态改为 removed，之后管理页和公开页均返回 404。
@@ -272,5 +256,5 @@ tests/                   单元、集成和端到端测试
 - [ ] 零活动 suburb 页面仍有内容、附近链接和发布入口。
 - [ ] 首页和 suburb 页源代码包含服务端渲染内容。
 - [ ] honeypot 和限流能阻止脚本化提交。
-- [ ] 匿名 Supabase key 无法读取邮箱和管理 token。
+- [ ] Supabase publishable key 无法读取邮箱和 token 哈希。
 - [ ] lint、格式、类型检查、测试和生产构建全部通过。

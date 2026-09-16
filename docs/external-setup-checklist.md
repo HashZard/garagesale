@@ -20,10 +20,22 @@
 
 - [ ] 创建 Worker 并配置自定义域名与统一的 `NEXT_PUBLIC_SITE_URL`。
 - [ ] 创建一组 cache、photo、backup R2 bucket，更新 `wrangler.jsonc` binding。
-- [ ] 配置 Worker secrets；service-role、Resend、Turnstile secret 和后台 secret 不得使用 `NEXT_PUBLIC_` 前缀。
+- [ ] 连接 GitHub 仓库，构建命令设为 `pnpm build:worker`。
+- [ ] 配置 Worker secrets；secret 不得写入 `wrangler.jsonc`，也不得使用 `NEXT_PUBLIC_` 前缀。
 - [ ] 开启 Workers Logs、错误告警、用量告警和可接受的消费上限。
 - [ ] 启用 Cloudflare Web Analytics，将 token 写入 `NEXT_PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN`；确认私人路径不加载 beacon。
 - [ ] 配置未引用上传清理和图片生命周期规则，并验证 R2 恢复演练。
+
+## GitHub Actions
+
+- [ ] 配置 CI 仓库 secret，名称必须与 `.github/workflows/ci.yml` 一致：
+      `SUPABASE_ACCESS_TOKEN`、`SUPABASE_PROJECT_ID`、`SUPABASE_URL`、
+      `SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_MAPBOX_TOKEN`、
+      `MAPBOX_SERVER_TOKEN`、`NEXT_PUBLIC_TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY`、
+      `RESEND_API_KEY`、`RESEND_FROM_EMAIL`、`ADMIN_SECRET`。
+- [ ] 旧 secret `SUPABASE_ANON_KEY` 与 `SUPABASE_SERVICE_ROLE_KEY` 已按新命名重建后删除。
+- [ ] 确认 CI 的 Turnstile 与 Mapbox 配置允许 `http://127.0.0.1:3000`，否则 E2E 发布闭环会失败。
+- [ ] 确认 `src/lib/env.ts` 新增必填变量时同步更新本清单、`.env.example` 与 CI 导出段。
 
 ## Mapbox
 

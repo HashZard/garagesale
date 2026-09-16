@@ -4,7 +4,9 @@
 
 ## 当前状态
 
-项目通过 Next.js 与 OpenNext 运行于 Cloudflare Workers，Postgres/PostGIS 使用 Supabase，图片与独立备份使用 Cloudflare R2。公开活动、卖家邮箱、哈希 token 和邮件 outbox 已分层。开发与部署共用一套外部服务配置，详见[架构基线](docs/architecture/garage-sale-architecture.md)。
+Next.js + OpenNext 运行于 Cloudflare Workers，数据在 Supabase Postgres/PostGIS，图片与备份在 Cloudflare R2。
+
+**本地开发直接读写线上共享数据库**，不存在本地实例或 staging（[ADR-0002](adr/0002-single-shared-environment.md)）。设计全貌见[架构基线](docs/architecture/garage-sale-architecture.md)。
 
 ## 环境要求
 
@@ -26,33 +28,32 @@ pnpm dev
 
 ## 数据库迁移
 
-链接唯一共享项目后，先完成逻辑导出备份，再审查并执行迁移：
-
-```bash
-pnpm exec supabase link --project-ref <project-ref>
-pnpm exec supabase db push --dry-run
-pnpm db:push  # 已完成逻辑导出备份后执行
-```
-
-不得对共享项目使用 `db reset --linked` 或 `--include-seed`。
+迁移直接作用于线上数据。**必须先完成逻辑导出备份**，且不得执行 `db reset --linked` 或导入 seed。
+完整流程见[部署与外部服务接入](docs/deployment.md)。
 
 ## 常用命令
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm format:check
-pnpm test
-pnpm exec playwright install chromium
-pnpm test:e2e
-pnpm audit
-pnpm build
-pnpm build:worker
-pnpm preview
-pnpm check
+pnpm check     # 格式 + Lint + 类型 + 单元测试 + 生产构建，交付前必跑
+pnpm test:e2e  # 首次需先 pnpm exec playwright install chromium
 ```
 
-`pnpm check` 包含格式、Lint、类型、单元测试和生产构建；E2E在本地单独运行，并在GitHub Actions中安装 Chromium 后执行。
+全部脚本见 `package.json`；各命令的适用场景见 [AGENTS.md](AGENTS.md)。`pnpm build:worker` 由 CI 单独门禁。
+
+## 数据来源
+
+`suburbs` 表的 suburb / postcode / 坐标数据来自第三方澳大利亚地名数据集。
+
+| 项目           | 值         |
+| -------------- | ---------- |
+| 数据集         | **待确定** |
+| 许可证         | **待确定** |
+| 要求的署名文本 | **待确定** |
+
+该表在数据集选定并确认许可证前保持未决。上线前必须填写本表，并把要求的署名文本同时呈现在
+About 页面；确认项见 [`docs/external-setup-checklist.md`](docs/external-setup-checklist.md)「数据与合规」。
+
+用户自行发布的活动数据由卖家提供，聚合活动记录始终链接原始来源。
 
 ## 文档
 

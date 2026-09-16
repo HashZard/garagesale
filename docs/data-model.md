@@ -32,6 +32,8 @@
 
 保存规范化 suburb、州、postcode、slug 和 PostGIS 点位。`get_nearby_suburbs` 在 PostGIS 内排序；`get_indexable_suburbs` 只返回有活跃或最近 90 天活动的 suburb。
 
+`suburb_directory` 是 `suburbs` 的公开只读 view，把 PostGIS 点位展开为经纬度，授予 anon 与 authenticated select，不输出额外字段。
+
 ## `rate_limits`
 
 保存哈希后的访问者键、动作和原子时间窗口计数。客户端不能直接访问表或 `consume_rate_limit`。
@@ -49,4 +51,8 @@
 
 ## 变更链路
 
-Schema 变化必须按以下顺序完成：新增 migration → 本地 reset/lint → 生成数据库类型 → 模块 schema/mapper → 查询或命令 → UI/API → RLS/契约/E2E 测试 → 更新本文与架构基线。
+系统只有一套共享数据库，没有本地实例，也不允许 reset（[ADR-0002](../adr/0002-single-shared-environment.md)）。Schema 变化必须按以下顺序完成：
+
+新增 migration → **逻辑导出备份** → `pnpm db:push` → `pnpm db:types` → 模块 schema/mapper → 查询或命令 → UI/API → RLS/契约/E2E 测试 → 更新本文与架构基线。
+
+备份是硬性门禁，未备份不得执行 `pnpm db:push`。migration 只追加、向后兼容；删除列或收紧约束单独成一次已备份的变更。

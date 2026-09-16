@@ -37,15 +37,23 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: pnpm db:lint
 
+      # `src/lib/env.ts` 要求下列全部变量；E2E 通过 `pnpm start` 运行真实应用，
+      # 缺任何一个都会在服务端渲染时抛错。新增必填变量时必须同步本段与仓库 secret。
       - name: 导出测试环境变量
         run: |
           echo "DEPLOYMENT_ENV=local" >> "$GITHUB_ENV"
-          echo "EMAIL_DELIVERY_MODE=preview" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000" >> "$GITHUB_ENV"
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> "$GITHUB_ENV"
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=${{ secrets.SUPABASE_SECRET_KEY }}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}" >> "$GITHUB_ENV"
+          echo "MAPBOX_SERVER_TOKEN=${{ secrets.MAPBOX_SERVER_TOKEN }}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" >> "$GITHUB_ENV"
+          echo "TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}" >> "$GITHUB_ENV"
+          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> "$GITHUB_ENV"
+          echo "RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }}" >> "$GITHUB_ENV"
+          echo "ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}" >> "$GITHUB_ENV"
 
       - name: 检查生成数据库类型
         env:

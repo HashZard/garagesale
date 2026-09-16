@@ -33,10 +33,6 @@ function normaliseState(
     : null;
 }
 
-/**
- * 真实数据模式下始终重新地理编码，不信任浏览器提交的地址结构或坐标。
- * permanent=true 与持久化地址/坐标的产品行为保持一致，启用前需确认 Mapbox 许可。
- */
 type AddressInput = {
   address: string;
   latitude: number;
@@ -46,6 +42,10 @@ type AddressInput = {
   suburb: string;
 };
 
+/**
+ * 始终在服务端重新地理编码，不信任浏览器提交的地址结构或坐标。
+ * permanent=true 与持久化地址/坐标的产品行为保持一致，启用前需确认 Mapbox 许可。
+ */
 export async function verifyAustralianAddress<T extends AddressInput>(
   input: T,
 ): Promise<T> {

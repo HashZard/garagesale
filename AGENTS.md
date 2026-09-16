@@ -10,6 +10,7 @@ GarageSale 是面向澳大利亚用户的车库售卖活动目录与无账号发
 - 历史技术决定：`docs/decisions.md`
 - 数据模型：`docs/data-model.md`
 - 外部配置：`docs/external-setup-checklist.md`
+- 部署与备份门禁：`docs/deployment.md`
 
 当前 Next.js 版本包含可能不同于旧版本的 API 和约定。修改 Next.js 代码前，先阅读 `node_modules/next/dist/docs/` 中与任务相关的文档，并遵守弃用提示。
 
@@ -50,17 +51,15 @@ pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 
 ## 强制规则
 
-- 个人项目、低并发：按当前需求的最简实现交付，不为假想的规模、扩展点或极端场景提前抽象；高可用、分片、多级缓存等议题不在讨论范围，确有必要的权衡写进 `adr/`。
+- 个人项目、低并发：按当前需求的最简实现交付，不为假想的规模或扩展点提前抽象；确有必要的权衡写进 `adr/`。
 - 所有项目文档使用中文；面向最终用户的网站文案使用英文。
 - 不超出 MVP PRD，不增加地址遮挡、多日活动、账号或浏览统计。
 - Server Components 优先；只在需要交互或浏览器 API 时使用 Client Components。
 - 不在页面或组件中直接查询 Supabase；数据库访问只写在 `src/modules/*/queries.ts`、`commands.ts` 与 `src/platform/database`，页面经由 `src/lib/db/*` 引用。
 - 客户端和服务端共用同一份 Zod schema（当前位于 `src/lib/validation`）。
 - 公开活动、卖家联系方式和访问 token 必须分表；token 只保存 SHA-256 哈希。
-- 系统只有一套环境：一个 Supabase 项目、一组 R2 bucket、一组外部服务凭据，本地与线上共用。不新增 staging、preview 或本地数据实例。
-- `DEPLOYMENT_ENV` 只有 `local` 与 `production`，表示代码运行位置，不表示数据边界；不得用它切换数据源。
+- 系统只有一套环境，本地与线上共用一个 Supabase 项目、一组 R2 bucket 和一组凭据；不新增 staging、preview 或本地数据实例，所有运行位置都用完整真实服务配置。`DEPLOYMENT_ENV` 只表示代码运行位置，不得用它切换数据源或放宽校验。
 - 应用 migration 前必须先完成逻辑导出备份。migration 只追加、向后兼容；删除列或收紧约束单独成一次已备份的变更。
-- 所有运行位置使用完整真实服务配置，不提供本地认证绕过或邮件预览。
 - 任意写链路必须可重试；数据库写入和邮件 outbox 必须在同一事务完成。
 - 不提交任何真实密钥；外部人工配置及时更新备忘清单。
 - 新决策域写入 `adr/`；只追溯旧实现时查看 `docs/decisions.md`。
