@@ -55,4 +55,4 @@
 
 新增 migration → **逻辑导出备份** → `pnpm db:push` → `pnpm db:types` → 模块 schema/mapper → 查询或命令 → UI/API → RLS/契约/E2E 测试 → 更新本文与架构基线。
 
-备份是硬性门禁，未备份不得执行 `pnpm db:push`。migration 只追加、向后兼容；删除列或收紧约束单独成一次已备份的变更。
+备份是硬性门禁，未备份不得执行 `pnpm db:push`。

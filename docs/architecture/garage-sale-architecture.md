@@ -22,7 +22,7 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 | 层级       | 选型                        | 责任                                            |
 | ---------- | --------------------------- | ----------------------------------------------- |
-| Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components |
+| Web        | Next.js 16 App Router       | SSR、SSG/ISR、Route Handlers、Server Components |
 | 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存与静态资产               |
 | 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流      |
 | 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                    |
@@ -102,7 +102,6 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 - 应用任何 migration 前必须先完成一次逻辑导出，这是硬性门禁。未备份不得执行 `pnpm db:push`。
 - Supabase 自动备份不是唯一恢复路径。每日执行逻辑数据库导出并写入 `garagesale-backups`。
 - 每日导出 R2 媒体清单；bucket 开启适合的对象版本或保留策略。
-- schema 变更优先采用只追加、向后兼容的写法。删除列、收紧约束或改写既有数据各自作为一次独立且已备份的变更。
 - 每月抽查备份，每季度用一次性临时 Supabase 项目完成恢复演练，演练结束后删除该项目。
 - migration、恢复脚本和恢复说明必须跟随 schema 变更更新。
 

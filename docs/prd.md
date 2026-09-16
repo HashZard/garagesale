@@ -82,7 +82,7 @@ GarageSale 帮助澳大利亚用户：
 - 技术栈是固定的。不引入第二套组件库、图标库、状态管理或分析供应商；新增运行时依赖须记入 `docs/decisions.md`。
 - 地理编码仅允许澳大利亚结果。
 - 距离查询必须在 PostGIS 内完成，不在应用层计算。
-- Node.js 版本由 `.nvmrc` 与 `package.json` 固定，`pnpm-lock.yaml` 必须提交。
+- Node.js 版本由 `package.json` 的 `engines` 固定，`pnpm-lock.yaml` 必须提交。
 
 环境变量记录在 `.env.example` 与 [`external-setup-checklist.md`](external-setup-checklist.md)；真实密钥不得提交。
 

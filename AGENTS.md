@@ -12,8 +12,6 @@ GarageSale 是面向澳大利亚用户的车库售卖活动目录与无账号发
 - 外部配置：`docs/external-setup-checklist.md`
 - 部署与备份门禁：`docs/deployment.md`
 
-当前 Next.js 版本包含可能不同于旧版本的 API 和约定。修改 Next.js 代码前，先阅读 `node_modules/next/dist/docs/` 中与任务相关的文档，并遵守弃用提示。
-
 ## 关键命令
 
 ```bash
@@ -30,11 +28,10 @@ pnpm check          # lint + format:check + typecheck + test + build
 pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 ```
 
-系统只有一套环境，不存在本地数据库（[ADR-0002](adr/0002-single-shared-environment.md)）。`pnpm dev`、
-`pnpm test` 与 `pnpm check` 都连接同一个共享 Supabase 项目，需要 `.env.local` 中的 `SUPABASE_URL`、
-`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`。
+`pnpm dev`、`pnpm test` 与 `pnpm check` 都连接共享 Supabase 项目（见 [ADR-0002](adr/0002-single-shared-environment.md)），
+需要 `.env.local` 中的 `SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`。
 
-因此本地与测试的写入都是真实数据：集成和 E2E 用例必须使用可识别的测试内容，并在结束时删除自己创建的行；
+写入都是真实数据：集成和 E2E 用例必须使用可识别的测试内容，并在结束时删除自己创建的行；
 不得依赖种子数据，不得对真实活动执行删除或状态变更。
 
 ## 目录规则
@@ -53,13 +50,13 @@ pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 
 - 个人项目、低并发：按当前需求的最简实现交付，不为假想的规模或扩展点提前抽象；确有必要的权衡写进 `adr/`。
 - 所有项目文档使用中文；面向最终用户的网站文案使用英文。
-- 不超出 MVP PRD，不增加地址遮挡、多日活动、账号或浏览统计。
+- 只实现 PRD 列入 MVP 的功能；未列入或明确排除的功能不得自行增加，确需增加先更新 PRD。
 - Server Components 优先；只在需要交互或浏览器 API 时使用 Client Components。
 - 不在页面或组件中直接查询 Supabase；数据库访问只写在 `src/modules/*/queries.ts`、`commands.ts` 与 `src/platform/database`，页面经由 `src/lib/db/*` 引用。
 - 客户端和服务端共用同一份 Zod schema（当前位于 `src/lib/validation`）。
 - 公开活动、卖家联系方式和访问 token 必须分表；token 只保存 SHA-256 哈希。
 - 系统只有一套环境，本地与线上共用一个 Supabase 项目、一组 R2 bucket 和一组凭据；不新增 staging、preview 或本地数据实例，所有运行位置都用完整真实服务配置。`DEPLOYMENT_ENV` 只表示代码运行位置，不得用它切换数据源或放宽校验。
-- 应用 migration 前必须先完成逻辑导出备份。migration 只追加、向后兼容；删除列或收紧约束单独成一次已备份的变更。
+- 应用 migration 前必须先完成逻辑导出备份。
 - 任意写链路必须可重试；数据库写入和邮件 outbox 必须在同一事务完成。
 - 不提交任何真实密钥；外部人工配置及时更新备忘清单。
 - 新决策域写入 `adr/`；只追溯旧实现时查看 `docs/decisions.md`。
@@ -68,6 +65,5 @@ pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 
 ## 常见任务
 
-- 增加销售字段：migration → 备份 → `pnpm db:push` → `pnpm db:types` → 校验 schema → 模块查询/命令 → 表单 → 展示 → 测试 → 数据模型文档。
 - 增加页面：路由装配 → metadata → loading/error/not-found → 业务组件 → 测试。
 - 修改业务规则：先更新PRD或决策记录，再修改校验、数据库约束、查询和测试。
