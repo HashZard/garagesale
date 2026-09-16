@@ -5,7 +5,7 @@ import { z } from "zod";
 const serverEnvSchema = z
   .object({
     ADMIN_SECRET: z.string().min(32).optional(),
-    DEPLOYMENT_ENV: z.enum(["local", "staging", "production"]).default("local"),
+    DEPLOYMENT_ENV: z.enum(["local", "production"]).default("local"),
     EMAIL_DELIVERY_MODE: z.enum(["preview", "resend"]).default("preview"),
     MAPBOX_SERVER_TOKEN: z.string().optional(),
     NEXT_PUBLIC_MAPBOX_TOKEN: z.string().optional(),
@@ -20,7 +20,9 @@ const serverEnvSchema = z
     TURNSTILE_SECRET_KEY: z.string().optional(),
   })
   .superRefine((environment, context) => {
-    if (environment.DEPLOYMENT_ENV !== "local") {
+    // 只有一个数据库，local 与 production 连接同一个 Supabase 项目。
+    // DEPLOYMENT_ENV 只放宽 Mapbox 与 Turnstile 的本地缺省，不切换数据源。
+    if (environment.DEPLOYMENT_ENV === "production") {
       for (const key of [
         "MAPBOX_SERVER_TOKEN",
         "NEXT_PUBLIC_MAPBOX_TOKEN",
@@ -33,7 +35,7 @@ const serverEnvSchema = z
         if (!environment[key]) {
           context.addIssue({
             code: "custom",
-            message: `${key} is required in supabase mode`,
+            message: `${key} is required when DEPLOYMENT_ENV is production`,
             path: [key],
           });
         }

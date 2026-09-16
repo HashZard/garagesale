@@ -18,17 +18,14 @@
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
       "bucket_name": "garagesale-opennext-cache",
-      "preview_bucket_name": "garagesale-opennext-cache-preview",
     },
     {
       "binding": "SALE_PHOTOS",
       "bucket_name": "garagesale-photos",
-      "preview_bucket_name": "garagesale-photos-preview",
     },
     {
       "binding": "BACKUPS",
       "bucket_name": "garagesale-backups",
-      "preview_bucket_name": "garagesale-backups-preview",
     },
   ],
   "images": {

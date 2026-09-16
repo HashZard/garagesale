@@ -2,6 +2,11 @@
 
 > 本文件保留 2026-08-20 之前的历史决定。当前有效跨层决定迁移到 `adr/`，与新架构冲突的历史条目不再生效。
 
+## 2026-09-16
+
+- ADR-0002 替代 ADR-0001 的环境隔离部分：系统只维护一套共享环境，数据库、R2 bucket、Mapbox token 与 Turnstile widget 各只有一份，本地开发与线上部署共用。
+- 移除本地 Supabase 实例与 `db:start`/`db:reset` 流程，并删除 `supabase/seed.sql`；迁移改为备份后 `pnpm db:push` 直接应用到共享数据库。
+
 ## 2026-08-20
 
 - ADR-0001 替代 Vercel 固定托管、共用生产 Supabase、运行时 demo store、明文管理 token、Supabase Storage 固定图片层和同步邮件发送决定。
@@ -30,6 +35,6 @@
 
 ## 2026-07-21
 
-- Supabase 已完成接入。开发、Preview 与 Production 共用同一个 Supabase 数据库，替代原先为 Preview/开发和 Production 分别创建项目的计划；共享数据库不导入开发 seed，所有迁移必须先在本地验证后再按发布流程应用。
+- Supabase 已完成接入。开发、Preview 与 Production 共用同一个 Supabase 数据库，替代原先为 Preview/开发和 Production 分别创建项目的计划；共享数据库不导入开发 seed。（2026-09-16 起由 ADR-0002 正式确认为唯一环境，本地验证环节随本地实例一并移除。）
 - Mapbox 同样采用一套生产账号及一组浏览器、服务端 token，供本地、Preview 与 Production 共用；浏览器 token 必须将正式域名、本地地址和实际需要的 Preview 域名加入允许来源，服务端 token 保持仅服务端可用。
 - Mapbox Geocoding API 不要求 secret scope；`MAPBOX_SERVER_TOKEN` 使用独立的最小权限 `pk` token 并仅存于服务端，不为获得 `sk` 前缀而授予无关的账户级 secret scope。

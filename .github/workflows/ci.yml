@@ -25,24 +25,31 @@ jobs:
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
 
-      - name: 启动并重置本地 Supabase
-        run: |
-          pnpm db:start
-          pnpm db:reset
-          pnpm db:lint
+      # 系统只有一套环境，CI 连接与线上相同的共享 Supabase 项目（ADR-0002）。
+      # 因此用例必须自行清理写入的数据，且不得执行 seed 或破坏性 SQL。
+      - name: 绑定共享 Supabase 项目
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: pnpm exec supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
 
-      - name: 导出本地测试环境变量
+      - name: 检查数据库 lint
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: pnpm db:lint
+
+      - name: 导出测试环境变量
         run: |
-          STATUS="$(pnpm exec supabase status -o json)"
           echo "DEPLOYMENT_ENV=local" >> "$GITHUB_ENV"
           echo "EMAIL_DELIVERY_MODE=preview" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000" >> "$GITHUB_ENV"
-          echo "SUPABASE_URL=$(jq -r .API_URL <<< "$STATUS")" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL <<< "$STATUS")" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(jq -r .ANON_KEY <<< "$STATUS")" >> "$GITHUB_ENV"
-          echo "SUPABASE_SERVICE_ROLE_KEY=$(jq -r .SERVICE_ROLE_KEY <<< "$STATUS")" >> "$GITHUB_ENV"
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> "$GITHUB_ENV"
 
       - name: 检查生成数据库类型
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           pnpm db:types
           git diff --exit-code -- src/types/database.generated.ts

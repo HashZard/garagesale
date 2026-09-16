@@ -4,7 +4,7 @@
 >
 > 决策日期：2026-08-20
 >
-> 关联决定：[ADR-0001](../../adr/0001-platform-and-runtime.md)
+> 关联决定：[ADR-0001](../../adr/0001-platform-and-runtime.md)、[ADR-0002](../../adr/0002-single-shared-environment.md)
 
 ## 1. 目标与边界
 
@@ -20,17 +20,17 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 2. 系统组成
 
-| 层级       | 选型                        | 责任                                            |
-| ---------- | --------------------------- | ----------------------------------------------- |
-| Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components |
-| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存、静态资产、预览部署     |
-| 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流      |
-| 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                    |
-| 地图       | Mapbox                      | 交互地图、地址建议、服务端地址验证              |
-| 邮件       | Resend                      | 验证、管理链接恢复和投递事件                    |
-| 防机器人   | Cloudflare Turnstile        | 公开写入口挑战                                  |
-| 分析       | Cloudflare Web Analytics    | 无 cookie 的公开流量统计                        |
-| CI/CD      | GitHub Actions              | 代码、数据库、浏览器和 workerd 门禁             |
+| 层级       | 选型                        | 责任                                                 |
+| ---------- | --------------------------- | ---------------------------------------------------- |
+| Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components      |
+| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存、静态资产                    |
+| 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流（单实例） |
+| 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                         |
+| 地图       | Mapbox                      | 交互地图、地址建议、服务端地址验证                   |
+| 邮件       | Resend                      | 验证、管理链接恢复和投递事件                         |
+| 防机器人   | Cloudflare Turnstile        | 公开写入口挑战                                       |
+| 分析       | Cloudflare Web Analytics    | 无 cookie 的公开流量统计                             |
+| CI/CD      | GitHub Actions              | 代码、数据库、浏览器和 workerd 门禁                  |
 
 ## 3. 渲染与缓存
 
@@ -83,13 +83,21 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 8. 环境
 
-| 环境            | 数据                                       | 搜索引擎 | 用途                   |
-| --------------- | ------------------------------------------ | -------- | ---------------------- |
-| Local/Test      | 本地 Supabase + R2 模拟或独立开发 bucket   | noindex  | 开发、迁移、集成测试   |
-| Staging/Preview | 独立 staging 数据库与 bucket，只含虚构数据 | noindex  | 客户验收、workerd 验证 |
-| Production      | 独立 production 数据库与 bucket            | index    | 正式服务               |
+系统只有一套环境，见 [ADR-0002](../../adr/0002-single-shared-environment.md)。Supabase 项目、R2 bucket、Mapbox token、Turnstile widget 和 Resend 发件域各只有一份，本地开发与已部署 Worker 共用。
 
-删除 `APP_DATA_MODE` 与文件型 demo store。本地种子数据只由 `supabase/seed.sql` 创建。邮件测试使用显式测试适配器，不进入生产构建。
+| 运行位置        | 数据                | 搜索引擎 | 用途                        |
+| --------------- | ------------------- | -------- | --------------------------- |
+| 本地 `pnpm dev` | 共享 Supabase 与 R2 | noindex  | 开发、调试、集成与 E2E 测试 |
+| 已部署 Worker   | 共享 Supabase 与 R2 | index    | 正式服务                    |
+
+`DEPLOYMENT_ENV` 只区分 `local` 与 `production`，表示代码运行在哪里，不表示数据边界。它只用于放宽 Mapbox、Turnstile 与管理员密钥的本地缺省，以及控制是否允许索引；任何取值下数据源都是同一个数据库。
+
+由此产生的约束：
+
+- 本地写入即线上写入。删除活动、变更状态和管理员操作没有沙箱。
+- 不存在 `supabase start`、`db reset` 和种子数据流程，`supabase/seed.sql` 已删除。测试数据由用例自行创建并清理。
+- 自动化测试直接连接共享数据库，必须使用可识别的测试内容并在用例结束时删除自己创建的行，不得依赖既有数据。
+- 邮件测试通过 `EMAIL_DELIVERY_MODE=preview` 在页面显示链接，不发送真实邮件。
 
 ## 9. SEO 基线
 
@@ -102,10 +110,13 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 10. 备份与恢复
 
-- Supabase 自动备份不是唯一恢复路径。
-- 每日执行逻辑数据库导出并写入独立 R2 backup bucket。
+单一数据库没有预演位，备份是唯一的数据恢复路径，优先级高于其他运维事项。
+
+- 应用任何 migration 前必须先完成一次逻辑导出，这是硬性门禁。未备份不得执行 `pnpm db:push`。
+- Supabase 自动备份不是唯一恢复路径。每日执行逻辑数据库导出并写入 `garagesale-backups`。
 - 每日导出 R2 媒体清单；bucket 开启适合的对象版本或保留策略。
-- 每月抽查备份，每季度在隔离环境完成数据库和媒体恢复演练。
+- schema 变更优先采用只追加、向后兼容的写法。删除列、收紧约束或改写既有数据各自作为一次独立且已备份的变更。
+- 每月抽查备份，每季度用一次性临时 Supabase 项目完成恢复演练，演练结束后删除该项目。
 - migration、恢复脚本和恢复说明必须跟随 schema 变更更新。
 
 ## 11. 质量门禁
@@ -113,8 +124,8 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 合并前必须通过：
 
 1. Prettier、ESLint、TypeScript 和单元测试。
-2. Supabase reset、DB lint、生成类型无漂移。
-3. RLS、公开 DTO、token 哈希和数据库状态机集成测试。
+2. 对共享数据库执行 DB lint，且生成类型无漂移。
+3. RLS、公开 DTO、token 哈希和数据库状态机集成测试；用例自行清理写入的数据。
 4. Next.js production build 与 OpenNext/workerd smoke test。
 5. Playwright 桌面和移动端核心闭环。
 6. Sitemap、canonical、JSON-LD、noindex 和缓存头测试。

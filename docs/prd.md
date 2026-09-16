@@ -75,7 +75,7 @@ GarageSale 帮助澳大利亚用户：
 | -------------- | ----------------------------------- | ------------------------------------------ |
 | Web 框架       | Next.js App Router + TypeScript     | Server Components 优先，SEO 内容服务端渲染 |
 | 数据库         | Supabase Postgres + PostGIS         | 距离查询必须使用 PostGIS                   |
-| 托管           | Cloudflare Workers + OpenNext       | Preview 与 Production 分离                 |
+| 托管           | Cloudflare Workers + OpenNext       | 单一环境，本地与线上共用外部资源           |
 | 地图与地理编码 | Mapbox GL JS + Mapbox Geocoding API | 仅允许澳大利亚结果                         |
 | 邮件           | Resend                              | 发送验证和恢复邮件                         |
 | 样式           | Tailwind CSS v4                     | 移动端优先                                 |
