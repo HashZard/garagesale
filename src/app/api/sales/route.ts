@@ -1,7 +1,6 @@
 import { PUBLISH_RATE_LIMIT_PER_HOUR } from "@/config/constants";
 import { publishSale, recordOutboxDelivery } from "@/lib/db/mutations";
 import { sendVerificationEmail } from "@/lib/email/sales";
-import { getServerEnv } from "@/lib/env";
 import {
   AddressVerificationError,
   verifyAustralianAddress,
@@ -75,13 +74,9 @@ export async function POST(request: Request) {
             : "Email send failed",
       });
     }
-    const preview = getServerEnv().EMAIL_DELIVERY_MODE === "preview";
     return Response.json({
       ok: true,
       emailQueued,
-      previewVerifyUrl: preview
-        ? `/verify/${result.verificationToken}?manage=${result.manageToken}`
-        : undefined,
     });
   } catch (error) {
     if (error instanceof AddressVerificationError) {

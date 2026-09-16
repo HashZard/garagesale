@@ -3,16 +3,11 @@ import Link from "next/link";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
 import { Container } from "@/components/container";
 import { AdminLoginForm } from "@/components/forms/admin-login-form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  LOCAL_ADMIN_SECRET,
-  getAdminSecret,
-  isAdminAuthenticated,
-} from "@/lib/admin-auth";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getAdminSales } from "@/lib/db/admin";
 import { formatSaleDateTime } from "@/lib/geo/timezone";
 
@@ -31,8 +26,6 @@ export const metadata: Metadata = {
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
-    const adminSecret = getAdminSecret();
-    const configured = Boolean(adminSecret);
     return (
       <Container className="max-w-md py-16">
         <Card>
@@ -43,23 +36,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </p>
           </CardHeader>
           <CardContent>
-            {configured ? (
-              <AdminLoginForm
-                localSecret={
-                  adminSecret === LOCAL_ADMIN_SECRET
-                    ? LOCAL_ADMIN_SECRET
-                    : undefined
-                }
-              />
-            ) : (
-              <Alert variant="destructive">
-                <AlertTitle>Admin is not configured</AlertTitle>
-                <AlertDescription>
-                  Set a unique ADMIN_SECRET of at least 32 characters, then
-                  restart the app.
-                </AlertDescription>
-              </Alert>
-            )}
+            <AdminLoginForm />
           </CardContent>
         </Card>
       </Container>

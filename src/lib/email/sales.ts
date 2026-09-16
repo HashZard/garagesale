@@ -31,10 +31,6 @@ export async function sendVerificationEmail(
   input: VerificationEmailInput,
 ): Promise<void> {
   const environment = getServerEnv();
-  if (environment.EMAIL_DELIVERY_MODE === "preview") return;
-  if (!environment.RESEND_API_KEY || !environment.RESEND_FROM_EMAIL) {
-    throw new Error("Resend is not configured");
-  }
 
   const resend = new Resend(environment.RESEND_API_KEY);
   const verifyUrl = `${environment.NEXT_PUBLIC_SITE_URL}/verify/${input.verificationToken}?manage=${encodeURIComponent(input.manageToken)}`;
@@ -61,11 +57,7 @@ export async function sendRecoveryEmail(input: {
   sales: RecoverySale[];
 }): Promise<void> {
   const environment = getServerEnv();
-  if (environment.EMAIL_DELIVERY_MODE === "preview" || input.sales.length === 0)
-    return;
-  if (!environment.RESEND_API_KEY || !environment.RESEND_FROM_EMAIL) {
-    throw new Error("Resend is not configured");
-  }
+  if (input.sales.length === 0) return;
 
   const listingLinks = input.sales
     .map((sale) => {

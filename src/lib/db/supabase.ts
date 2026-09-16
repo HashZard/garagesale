@@ -8,13 +8,13 @@ import type { Database } from "@/types/database.generated";
 export function createPublicSupabaseClient(): SupabaseClient<Database> {
   const environment = getServerEnv();
   const url = environment.SUPABASE_URL ?? environment.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url || !environment.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!url || !environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
     throw new Error("Supabase public client is not configured");
   }
 
   return createClient<Database>(
     url,
-    environment.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     { auth: { persistSession: false } },
   );
 }
@@ -22,11 +22,11 @@ export function createPublicSupabaseClient(): SupabaseClient<Database> {
 export function createServiceSupabaseClient(): SupabaseClient<Database> {
   const environment = getServerEnv();
   const url = environment.SUPABASE_URL ?? environment.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url || !environment.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!url || !environment.SUPABASE_SECRET_KEY) {
     throw new Error("Supabase service client is not configured");
   }
 
-  return createClient<Database>(url, environment.SUPABASE_SERVICE_ROLE_KEY, {
+  return createClient<Database>(url, environment.SUPABASE_SECRET_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

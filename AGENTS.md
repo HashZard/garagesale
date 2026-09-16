@@ -31,7 +31,7 @@ pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 
 系统只有一套环境，不存在本地数据库（[ADR-0002](adr/0002-single-shared-environment.md)）。`pnpm dev`、
 `pnpm test` 与 `pnpm check` 都连接同一个共享 Supabase 项目，需要 `.env.local` 中的 `SUPABASE_URL`、
-`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`。
+`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`。
 
 因此本地与测试的写入都是真实数据：集成和 E2E 用例必须使用可识别的测试内容，并在结束时删除自己创建的行；
 不得依赖种子数据，不得对真实活动执行删除或状态变更。
@@ -60,6 +60,7 @@ pnpm build:worker   # OpenNext/Cloudflare Workers 构建，CI 单独门禁
 - 系统只有一套环境：一个 Supabase 项目、一组 R2 bucket、一组外部服务凭据，本地与线上共用。不新增 staging、preview 或本地数据实例。
 - `DEPLOYMENT_ENV` 只有 `local` 与 `production`，表示代码运行位置，不表示数据边界；不得用它切换数据源。
 - 应用 migration 前必须先完成逻辑导出备份。migration 只追加、向后兼容；删除列或收紧约束单独成一次已备份的变更。
+- 所有运行位置使用完整真实服务配置，不提供本地认证绕过或邮件预览。
 - 任意写链路必须可重试；数据库写入和邮件 outbox 必须在同一事务完成。
 - 不提交任何真实密钥；外部人工配置及时更新备忘清单。
 - 新决策域写入 `adr/`；只追溯旧实现时查看 `docs/decisions.md`。

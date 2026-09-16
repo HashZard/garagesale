@@ -15,8 +15,8 @@ GarageSale 只维护一套运行环境。数据库、R2 bucket、Mapbox token、
 - Supabase 只有一个项目，是所有环境唯一的数据权威。不存在本地 Postgres、staging 项目或 preview 数据库。
 - R2 只有 `garagesale-opennext-cache`、`garagesale-photos`、`garagesale-backups` 三个 bucket，不配置 preview bucket。
 - 迁移通过 `pnpm db:push` 直接应用到这个共享数据库。种子数据流程随本地实例一并取消，`supabase/seed.sql` 已删除。
-- `DEPLOYMENT_ENV` 只保留 `local` 与 `production`，表示代码运行在开发机还是已部署的 Worker，不再表示数据边界。`local` 仅用于放宽 Mapbox、Turnstile 和管理员密钥的本地缺省，不切换数据源。
-- 只有 `production` 允许被搜索引擎索引；本地运行保持 `noindex`。
+- `DEPLOYMENT_ENV` 只保留 `local` 与 `production`，表示代码运行在开发机还是已部署的 Worker，不再表示数据边界。不切换数据源，也不放宽 Mapbox、Turnstile 和管理员密钥校验。
+- 所有运行位置必须提供完整真实服务配置；不保留邮件预览、默认管理员口令或 Mapbox/Turnstile 绕过。站点 URL 与索引规则由统一站点配置控制。
 - 自动化测试与共享数据库连通，必须自行清理写入的数据，且不得依赖种子数据。
 
 ## 背景

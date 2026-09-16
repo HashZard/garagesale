@@ -4,8 +4,7 @@
 
 ## 2026-09-16
 
-- ADR-0002 替代 ADR-0001 的环境隔离部分：系统只维护一套共享环境，数据库、R2 bucket、Mapbox token 与 Turnstile widget 各只有一份，本地开发与线上部署共用。
-- 移除本地 Supabase 实例与 `db:start`/`db:reset` 流程，并删除 `supabase/seed.sql`；迁移改为备份后 `pnpm db:push` 直接应用到共享数据库。
+- ADR-0002 替代 ADR-0001 中关于隔离 local、staging、production 数据环境的决定；开发、预览和部署共用一套外部服务配置。
 
 ## 2026-08-20
 

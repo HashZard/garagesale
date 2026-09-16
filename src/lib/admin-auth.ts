@@ -8,22 +8,12 @@ import {
 } from "@/lib/admin-session";
 import { getServerEnv } from "@/lib/env";
 
-export const LOCAL_ADMIN_SECRET = "garage-sale-local-admin-secret-change-me";
-
-export function getAdminSecret(): string | null {
-  const environment = getServerEnv();
-  return (
-    environment.ADMIN_SECRET ??
-    (environment.DEPLOYMENT_ENV === "local" &&
-    process.env.NODE_ENV !== "production"
-      ? LOCAL_ADMIN_SECRET
-      : null)
-  );
+export function getAdminSecret(): string {
+  return getServerEnv().ADMIN_SECRET;
 }
 
 export async function isAdminAuthenticated(): Promise<boolean> {
   const secret = getAdminSecret();
-  if (!secret) return false;
   const cookieStore = await cookies();
   return verifyAdminSessionToken(
     cookieStore.get(ADMIN_COOKIE_NAME)?.value,

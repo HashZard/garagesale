@@ -31,10 +31,7 @@ export function TurnstileWidget({
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
-    if (!siteKey) {
-      onToken("local-turnstile-bypass");
-      return;
-    }
+    if (!siteKey) return;
     if (!ready || !containerRef.current || !window.turnstile) return;
     const widgetId = window.turnstile.render(containerRef.current, {
       callback: onToken,

@@ -20,17 +20,17 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 2. 系统组成
 
-| 层级       | 选型                        | 责任                                                 |
-| ---------- | --------------------------- | ---------------------------------------------------- |
-| Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components      |
-| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存、静态资产                    |
-| 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流（单实例） |
-| 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                         |
-| 地图       | Mapbox                      | 交互地图、地址建议、服务端地址验证                   |
-| 邮件       | Resend                      | 验证、管理链接恢复和投递事件                         |
-| 防机器人   | Cloudflare Turnstile        | 公开写入口挑战                                       |
-| 分析       | Cloudflare Web Analytics    | 无 cookie 的公开流量统计                             |
-| CI/CD      | GitHub Actions              | 代码、数据库、浏览器和 workerd 门禁                  |
+| 层级       | 选型                        | 责任                                            |
+| ---------- | --------------------------- | ----------------------------------------------- |
+| Web        | Next.js App Router          | SSR、SSG/ISR、Route Handlers、Server Components |
+| 运行与 CDN | Cloudflare Workers          | OpenNext 运行、边缘缓存与静态资产               |
+| 数据       | Supabase Postgres + PostGIS | 活动、位置、状态机、私密数据、outbox、限流      |
+| 媒体       | Cloudflare R2               | 活动图片、临时上传、独立备份                    |
+| 地图       | Mapbox                      | 交互地图、地址建议、服务端地址验证              |
+| 邮件       | Resend                      | 验证、管理链接恢复和投递事件                    |
+| 防机器人   | Cloudflare Turnstile        | 公开写入口挑战                                  |
+| 分析       | Cloudflare Web Analytics    | 无 cookie 的公开流量统计                        |
+| CI/CD      | GitHub Actions              | 代码、数据库、浏览器和 workerd 门禁             |
 
 ## 3. 渲染与缓存
 
@@ -83,21 +83,9 @@ GarageSale 是面向澳大利亚用户的活动目录和无账号发布工具。
 
 ## 8. 环境
 
-系统只有一套环境，见 [ADR-0002](../../adr/0002-single-shared-environment.md)。Supabase 项目、R2 bucket、Mapbox token、Turnstile widget 和 Resend 发件域各只有一份，本地开发与已部署 Worker 共用。
+开发、预览与正式实例共用同一个 Supabase 项目、R2 bucket、Mapbox、Turnstile、Resend 及站点 URL。`DEPLOYMENT_ENV` 仅表示代码运行位置；应用没有 demo store、邮件预览或安全绕过；每次开发操作均按真实服务路径执行。
 
-| 运行位置        | 数据                | 搜索引擎 | 用途                        |
-| --------------- | ------------------- | -------- | --------------------------- |
-| 本地 `pnpm dev` | 共享 Supabase 与 R2 | noindex  | 开发、调试、集成与 E2E 测试 |
-| 已部署 Worker   | 共享 Supabase 与 R2 | index    | 正式服务                    |
-
-`DEPLOYMENT_ENV` 只区分 `local` 与 `production`，表示代码运行在哪里，不表示数据边界。它只用于放宽 Mapbox、Turnstile 与管理员密钥的本地缺省，以及控制是否允许索引；任何取值下数据源都是同一个数据库。
-
-由此产生的约束：
-
-- 本地写入即线上写入。删除活动、变更状态和管理员操作没有沙箱。
-- 不存在 `supabase start`、`db reset` 和种子数据流程，`supabase/seed.sql` 已删除。测试数据由用例自行创建并清理。
-- 自动化测试直接连接共享数据库，必须使用可识别的测试内容并在用例结束时删除自己创建的行，不得依赖既有数据。
-- 邮件测试通过 `EMAIL_DELIVERY_MODE=preview` 在页面显示链接，不发送真实邮件。
+共享项目不得导入 `supabase/seed.sql` 或执行任何 reset。migration 必须先审查 dry run 并确认备份可用后再应用。
 
 ## 9. SEO 基线
 

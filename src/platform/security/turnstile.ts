@@ -7,13 +7,7 @@ export async function verifyTurnstile(
   remoteIp: string,
 ): Promise<boolean> {
   const environment = getServerEnv();
-  if (
-    environment.DEPLOYMENT_ENV === "local" &&
-    !environment.TURNSTILE_SECRET_KEY
-  ) {
-    return token === "local-turnstile-bypass";
-  }
-  if (!token || !environment.TURNSTILE_SECRET_KEY) return false;
+  if (!token) return false;
   const body = new FormData();
   body.set("secret", environment.TURNSTILE_SECRET_KEY);
   body.set("response", token);
